@@ -1,0 +1,34 @@
+'context-menu':
+  'atom-text-editor': [
+    {
+      label: 'roku-develop'
+      submenu: [
+        {
+        label: 'Deploy to selected devices'
+        command: 'roku-develop:deploy'
+        },
+        {
+        label: 'Toggle device list'
+        command: 'roku-develop:toggle'
+        }
+      ]
+    }
+  ]
+menu: [
+  {
+    label: 'Packages'
+    submenu: [
+      label: 'roku-develop'
+      submenu: [
+        {
+        label: 'Deploy to selected devices'
+        command: 'roku-develop:deploy'
+        },
+        {
+        label: 'Toggle device list'
+        command: 'roku-develop:toggle'
+        }
+      ]
+    ]
+  }
+]

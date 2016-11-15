@@ -1,0 +1,48 @@
+@import "ui-variables";
+
+@roku-develop-font-color:  #BC68D5;  // Purple-ish
+
+.roku-develop {
+  color: @roku-develop-font-color;
+  font-family: Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  padding-top: 0.6em;
+  padding-left: 0.5em;
+}
+
+.roku-develop .ipInputContainer {
+  display: none;
+  margin-bottom: 0.4em;
+}
+
+.roku-develop input[type="text"] {
+  color: @text-color;
+  background-color: @base-background-color;
+  border: 2px solid @background-color-info;
+  border-radius: 0.3em;
+  padding-left: 0.5em;
+  margin-left: 2em;
+}
+
+.roku-develop .buttonAndDeviceContainer {
+  display: flex;
+}
+
+.roku-develop .buttonContainer {
+  display: table;
+  margin-right: 2em;
+}
+
+.roku-develop .buttonContainer > div {
+  display: table-row;
+}
+
+.roku-develop button {
+  display: table-cell;
+  width: 100%;
+  margin-bottom: 0.4em;
+}
+
+.roku-develop .deviceTable {
+  border-collapse: separate;
+  border-spacing: 0.9em 0.2em;
+}

@@ -1,7 +1,7 @@
 {
   "name": "roku-develop",
   "main": "./lib/roku-develop.coffee",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Roku development utility - zip and deploy a Roku project to multiple devices.",
   "keywords": [
     "roku",

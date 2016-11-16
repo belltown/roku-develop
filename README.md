@@ -43,9 +43,40 @@ zip file. This can be used as a workaround to a Roku bug that
 causes the device to sometimes re-boot when deploying a Scene Graph
 channel. Uncheck this box for faster deployment, provided the Roku does not crash.
 
+### Keyboard shortcuts
+
+roku-develop uses two commands, ```roku-develop:toggle```
+and ```roku-develop:deploy```,
+which may be selected from the Packages > roku-develop menu,
+or from the context (right-click) menu.
+
+In addition, the following keyboard shortcuts are defined by default:
+
+<kbd>Ctrl+;</kbd> (Ctrl-semicolon) - Toggle device list.
+
+<kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
+
+If you find that these particular key combinations don't work well with
+your keyboard configuration, you can change them:
+
+1. On the roku-develop package Settings page, un-check the 'Enable' box
+under Keybindings.
+
+2. Edit your Atom keymap.cson file
+(look under **File > Keymap...** or **Edit > Keymap...**),
+then add your own keybindings. For example, to use <kbd>Ctrl+8</kbd> and
+<kbd>Ctrl+9</kbd> instead, place the following lines at the end of
+your keymap.cson file:
+
+```
+'atom-workspace':
+  'ctrl-8': 'roku-develop:toggle'
+  'ctrl-9': 'roku-develop:deploy'
+```
+
 ### Usage
 
-<kbd>Ctrl+;</kbd> (Ctrl-semicolon) - Toggles deployment panel on/off.
+<kbd>Ctrl+;</kbd> (Ctrl-semicolon) - Toggle device list.
 Wait for devices to be automatically discovered,
 then check the boxes to specify devices for deployment.
 The state of the device table will be persisted between editor sessions.
@@ -58,7 +89,7 @@ Uncheck the boxes for devices not to be deployed to.**
 
 ---
 
-<kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to checked devices.
+<kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
 
 ---
 

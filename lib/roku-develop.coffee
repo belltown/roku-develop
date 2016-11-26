@@ -301,7 +301,14 @@ module.exports        = RokuDevelop =
 
     # Save the file -- this will update the timestamp even if nothing changed
     if @saveOnDeploy
-      activeTextEditor.save()
+      try
+        activeTextEditor.save()
+      catch e
+        console.warn 'Can\'t save this file: %O', e
+        atom.notifications.addError 'Can\'t save this file.
+                                     Check you have write access to the file',
+                                    {dismissable: true, detail: e.message}
+        return
 
     # Increment the build number in the manifest file, then continue deployment
     @incrementManifestBuild()
@@ -342,8 +349,10 @@ module.exports        = RokuDevelop =
                                 'build_version=' + newBuildVersion
             fs.writeFile manifestPath, data, 'utf8', (e) =>
               if e
-                console.warn 'Error writing manifest file: %O', e
-                atom.notifications.addError 'Unable to write manifest file',
+                console.warn 'Can\'t update manifest file: %O', e
+                atom.notifications.addError 'Can\'t update manifest file.
+                                             Check you have write access
+                                             to the manifest file',
                                         {dismissable: true, detail: e.message}
               else
                 @createZip()

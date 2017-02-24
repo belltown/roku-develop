@@ -469,7 +469,7 @@ module.exports        = RokuDevelop =
       else if not response
         atom.notifications.addWarning 'No response received from ' + ip,
                                       {dismissable: true}
-      else if response.statusCode isnt 200
+      else if response.statusCode isnt 200 and response.statusCode isnt 202
         atom.notifications.addWarning 'Bad response code ' +
                                       response.statusCode +
                                       ' from ' + ip, {dismissable: true}
@@ -520,7 +520,7 @@ module.exports        = RokuDevelop =
                                                 your Roku user id and password
                                                 \non the Settings page.'
                                       }
-      else if response.statusCode isnt 200
+      else if response.statusCode isnt 200 and response.statusCode isnt 202
         atom.notifications.addWarning 'Bad upload response code ' +
                                       response.statusCode + ' from ' + ip,
                                       {dismissable: true}

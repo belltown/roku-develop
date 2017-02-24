@@ -1,3 +1,13 @@
+## v0.1.4 - Handle HTTP code 202 from Roku device
+
+- When deploying, treat an HTTP status code 202 (Accepted) the same as a code 200 (OK)
+- Update copyright year
+
+## v0.1.3 - Minor changes to device discovery
+
+- Apply a timeout when creating socket to send ECP request to discovered device.
+- Use `reuseAddr: true` option when opening notify-socket to allow other applications to also listen for SSDP NOTIFY responses.
+
 ## v0.1.2 - Improve error messages
 
 If the current file cannot be saved, or the manifest file cannot be updated, then output a more descriptive error message.

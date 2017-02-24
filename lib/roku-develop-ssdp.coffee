@@ -39,6 +39,21 @@ deviceDiscovered = (ipAddr, serialNumber, discoveryCallback) ->
     )
   )
 
+  # A 'socket' event is emitted after a socket is assigned to the request
+  # Handle this event to set a timeout on the socket connection
+  # This is instead of setting the timeout when http.request() is called,
+  # which would only be emitted after the socket is assigned and is connected,
+  # and would not detect a timeout while trying to establish the connection
+  req.on('socket', (socket) =>
+    socket.setTimeout 10000
+    socket.on('timeout', () =>
+      console.log 'deviceDiscovered socket timeout'
+      # A timeout does not abort the connection; it has to be done manually
+      # This will cause a createHangUpError error to be emitted on the request
+      req.abort()
+    )
+  )
+
   # Even if there is an error on the ECP request, invoke the
   # discoveryCallback with the known ip address and serial number
   req.on('error', (error) =>
@@ -84,7 +99,7 @@ ssdpSearchRequest = (discoveryCallback) ->
 # Listen for SSDP discovery NOTIFY responses
 # These should be received whenever a device connects to the network
 ssdpNotify = (discoveryCallback) ->
-  notifySocket = dgram.createSocket 'udp4'
+  notifySocket = dgram.createSocket {type: 'udp4', reuseAddr: true}
 
   notifySocket.on('message', (msg, rinfo) =>
     ssdpResponse = msg.toString()

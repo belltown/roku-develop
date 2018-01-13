@@ -1,3 +1,8 @@
+## v0.1.5 - Update dependencies
+
+- Use the latest versions of all dependent packages
+- Update copyright year
+
 ## v0.1.4 - Handle HTTP code 202 from Roku device
 
 - When deploying, treat an HTTP status code 202 (Accepted) the same as a code 200 (OK)

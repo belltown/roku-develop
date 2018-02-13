@@ -12,6 +12,7 @@ RokuSSDP              = require './roku-develop-ssdp.coffee'
 module.exports        = RokuDevelop =
 
   excludedPaths:      null
+  excludedPathList:   null
   zipFileDirectory:   null
   rokuUserId:         null
   rokuPassword:       null
@@ -89,6 +90,7 @@ module.exports        = RokuDevelop =
     # Get Atom config data, and add event-handlers for config updates
 
     @excludedPaths    = atom.config.get 'roku-develop.excludedPaths'
+    @excludedPathList = (item.trim() for item in @excludedPaths.split ',')
     @zipFileDirectory = atom.config.get 'roku-develop.zipFileDirectory'
     @rokuUserId       = atom.config.get 'roku-develop.rokuUserId'
     @rokuPassword     = atom.config.get 'roku-develop.rokuPassword'
@@ -99,6 +101,7 @@ module.exports        = RokuDevelop =
 
     atom.config.observe 'roku-develop.excludedPaths', (newValue) =>
       @excludedPaths = newValue
+      @excludedPathList = (item.trim() for item in @excludedPaths.split ',')
 
     atom.config.observe 'roku-develop.zipFileDirectory', (newValue) =>
       @zipFileDirectory = newValue
@@ -395,9 +398,6 @@ module.exports        = RokuDevelop =
                                   {dismissable: true, detail: e.message}
       archive?.abort()
 
-    # Construct a list of excluded paths, trimming whitespace from each item
-    excludedPathList = (item.trim() for item in @excludedPaths.split ',')
-
     # Use the archiver package to create a zip of the project directory
     # Note that the forceLocalTime zip option doesn't appear to work,
     # so the files in the zip bundle may have UTC timestamps
@@ -412,24 +412,26 @@ module.exports        = RokuDevelop =
     archive.pipe outputStream
 
     # Compile a list of files and directories to be compressed
-    for entry in @projectDirectory.getEntriesSync()
-      baseName = entry.getBaseName()
-      pathname = entry.getRealPathSync()
-      # Ignore hidden files and directories, and excluded files and directories
-      if  not (baseName.startsWith '.') and (baseName not in excludedPathList)
-        if entry.isFile()
-          # Queue a file for compression, but not the zip file itself
-          if pathname isnt @zipFilePath
-            archive.file pathname, {name: baseName}
-        else if entry.isDirectory()
-          # Queue a directory for compression, but not the zip file directory
-          if pathname isnt path.dirname @zipFilePath
-            archive.directory pathname, baseName
+    @addFilesToArchive(archive, @projectDirectory)
 
     # Finish the compression, calling the output stream's close handler
     archive.finalize()
-
     return true
+
+  addFilesToArchive: (archive, parentEntry) ->
+    for entry in parentEntry.getEntriesSync()
+      baseName = entry.getBaseName()
+      pathname = entry.getRealPathSync()
+      # Ignore hidden files and directories, and excluded files and directories
+      if  not (baseName.startsWith '.') and (baseName not in @excludedPathList)
+        if entry.isFile()
+          # Queue a file for compression, but not the zip file itself
+          if pathname isnt @zipFilePath
+            archive.file pathname, {name: entry.getPath().replace(@projectDirectory.getPath(),"")}
+        else if entry.isDirectory()
+          # Queue a directory for compression, but not the zip file directory
+          if pathname isnt path.dirname @zipFilePath
+            @addFilesToArchive(archive, entry)
 
   #
   # Determine the pathname used for the compressed zip file

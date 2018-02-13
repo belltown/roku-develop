@@ -430,7 +430,8 @@ module.exports        = RokuDevelop =
             archive.file pathname, {name: entry.getPath().replace(@projectDirectory.getPath(),"")}
         else if entry.isDirectory()
           # Queue a directory for compression, but not the zip file directory
-          if pathname isnt path.dirname @zipFilePath
+          zipDirectoryPath = path.dirname @zipFilePath
+          if (pathname isnt zipDirectoryPath) and (entry.getPath() isnt zipDirectoryPath)
             @addFilesToArchive(archive, entry)
 
   #

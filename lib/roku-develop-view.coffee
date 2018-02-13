@@ -72,7 +72,7 @@ module.exports = class RokuDevelopView
     clearButton.appendChild document.createTextNode 'Clear List'
     clearButton.classList.add 'btn', 'btn-primary'
     @subscriptions.add atom.tooltips.add(clearButton
-      , { title: 'Clear device list. Restart editor to re-discover'
+      , { title: 'Clear device list'
         , delay: { 'show': 100, 'hide': 100 }
         , trigger: 'hover'})
     clearButton.addEventListener 'click', () =>

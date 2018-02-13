@@ -2,7 +2,7 @@
 
 ### an [ATOM editor](https://atom.io/) package to deploy a Roku project to multiple devices
 
-*Automatically discover Rokus on the local network.*
+*Automatically (or manually) discover Rokus on the local network.*
 
 *Zip the current Roku project directory.*
 
@@ -42,6 +42,9 @@ to the device, followed by a short delay, before uploading the
 zip file. This can be used as a workaround to a Roku bug that
 causes the device to sometimes re-boot when deploying a Scene Graph
 channel. Uncheck this box for faster deployment, provided the Roku does not crash.
+
+`Automatically discover Rokus on the local network` - if checked, will automatically attempt to discover all Rokus on the local network.
+If un-checked, will disable automatic discovery, only allowing Roku devices to be manually entered.
 
 ### Keyboard shortcuts
 
@@ -87,6 +90,8 @@ may or may not be reflected in the other Atom instances.
 **By default, all newly-discovered devices are checked.
 Uncheck the boxes for devices not to be deployed to.**
 
+**To disable automatic discovery, un-check the Settings option for automatic discovery.**
+
 ---
 
 <kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
@@ -100,9 +105,8 @@ it responds to ECP requests.
 
 ---
 
-`Clear List` button will remove all automatically and manually-discovered
-devices from the list. Automatic discovery will re-add devices,
-although it may be necessary to restart Atom.
+`Clear List` button will remove all automatically-discovered and manually-added
+devices from the list. Automatic discovery (if enabled in Settings) will re-add devices.
 
 ---
 

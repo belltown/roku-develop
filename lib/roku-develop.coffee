@@ -18,6 +18,7 @@ module.exports        = RokuDevelop =
   manifestBuild:      null
   saveOnDeploy:       null
   homeBeforeDeploy:   null
+  autoDiscover:       null
   rokuDeviceTable:    null
   rokuDevelopView:    null
   subscriptions:      null
@@ -73,6 +74,12 @@ module.exports        = RokuDevelop =
       type: 'boolean'
       default: false
       order: 7
+    autoDiscover:
+      title: 'Automatically discover Rokus on the local network'
+      description: 'Un-check to only allow manual device entry'
+      type: 'boolean'
+      default: true
+      order: 8
 
   #
   # Invoked by Atom one time only, when an activation command is issued
@@ -88,6 +95,7 @@ module.exports        = RokuDevelop =
     @manifestBuild    = atom.config.get 'roku-develop.manifestBuild'
     @saveOnDeploy     = atom.config.get 'roku-develop.saveOnDeploy'
     @homeBeforeDeploy = atom.config.get 'roku-develop.homeBeforeDeploy'
+    @autoDiscover     = atom.config.get 'roku-develop.autoDiscover'
 
     atom.config.observe 'roku-develop.excludedPaths', (newValue) =>
       @excludedPaths = newValue
@@ -109,6 +117,13 @@ module.exports        = RokuDevelop =
 
     atom.config.observe 'roku-develop.homeBeforeDeploy', (newValue) =>
       @homeBeforeDeploy = newValue
+
+    atom.config.observe 'roku-develop.autoDiscover', (newValue) =>
+      # If auto-discovery was previously disabled, but is now being enabled,
+      # then initiate SSDP discovery
+      if not @autoDiscover and newValue
+        RokuSSDP.discover @discoveryCallback.bind(this)
+      @autoDiscover = newValue
 
     # Use a config file in Atom's config directory to persist the device table
     @myConfig = new Config({name: 'roku-develop-config'})
@@ -145,7 +160,9 @@ module.exports        = RokuDevelop =
 
     # Initiate device discovery
     # 'bind' ensures callback executes in the context of the main package code
-    RokuSSDP.discover @discoveryCallback.bind(this)
+    # Do not initiate SSDP discovery if automatic discovery is turned off
+    if @autoDiscover
+      RokuSSDP.discover @discoveryCallback.bind(this)
 
   #
   # Invoked by Atom upon shutdown
@@ -225,15 +242,18 @@ module.exports        = RokuDevelop =
 
   #
   # Called from RokuSSDP whenever a device has been discovered
+  # If this is an automatically-discovered device,
+  # only add to the device table if autoDiscover is enabled
   #
-  discoveryCallback: (details) ->
-    # Update the device table with the new device details
-    deviceTableChanged = @rokuDeviceTable.add details
-    if deviceTableChanged
-      # Update the view only if the device table has changed
-      @rokuDevelopView.update @rokuDeviceTable
-      # Persist the device table to the config file
-      @myConfig.set 'deviceTableJsonString', @rokuDeviceTable.toJsonString()
+  discoveryCallback: (details, autoDiscovered) ->
+    if not autoDiscovered or @autoDiscover
+      # Update the device table with the new device details
+      deviceTableChanged = @rokuDeviceTable.add details
+      if deviceTableChanged
+        # Update the view only if the device table has changed
+        @rokuDevelopView.update @rokuDeviceTable
+        # Persist the device table to the config file
+        @myConfig.set 'deviceTableJsonString', @rokuDeviceTable.toJsonString()
 
   #
   # Return true if an ip address is of the form: aaa.bbb.ccc.ddd

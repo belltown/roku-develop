@@ -25,7 +25,7 @@ parseDeviceDetails = (ipAddr, serialNumber, data) ->
 
 # Send an ECP request to the device to get its details
 # Invoke the callback to pass the device details back to the caller
-deviceDiscovered = (ipAddr, serialNumber, discoveryCallback) ->
+deviceDiscovered = (ipAddr, serialNumber, discoveryCallback, autoDiscover) ->
   bufferList = []
   req = http.request({host: ipAddr, port: 8060, family: 4}, (res) =>
     res.on('data', (chunk) =>
@@ -35,7 +35,7 @@ deviceDiscovered = (ipAddr, serialNumber, discoveryCallback) ->
       response = Buffer.concat(bufferList).toString()
       details = parseDeviceDetails ipAddr, serialNumber, response
       if details.serialNumber
-        discoveryCallback details
+        discoveryCallback details, autoDiscover
     )
   )
 
@@ -59,7 +59,7 @@ deviceDiscovered = (ipAddr, serialNumber, discoveryCallback) ->
   req.on('error', (error) =>
     details = parseDeviceDetails ipAddr, serialNumber, ''
     if details.serialNumber
-      discoveryCallback details
+      discoveryCallback details, autoDiscover
     console.warn 'ECP request to %s failed: %O', ipAddr, error
   )
 
@@ -90,7 +90,7 @@ ssdpSearchRequest = (discoveryCallback) ->
     # Only add devices that have an ip address and serial number
     # This will trigger an ECP request to get the device details
     if ipAddr and serialNumber
-      deviceDiscovered ipAddr, serialNumber, discoveryCallback
+      deviceDiscovered ipAddr, serialNumber, discoveryCallback, true
   )
 
   # Send the M-SEARCH request to the SSDP multicast group
@@ -110,7 +110,7 @@ ssdpNotify = (discoveryCallback) ->
     # Only add devices that have an ip address AND Roku serial number,
     # to avoid sending ECP requests to non-Roku devices.
     if ipAddr and serialNumber
-      deviceDiscovered ipAddr, serialNumber, discoveryCallback
+      deviceDiscovered ipAddr, serialNumber, discoveryCallback, true
   )
 
   # Handle errors on the NOTIFY socket
@@ -162,6 +162,6 @@ class RokuSSDP
   # Attempt to acquire device details from a user-entered, non-discovered
   # device, for which the serial number is unknown
   @ecp = (ipAddr, discoveryCallback) ->
-    deviceDiscovered ipAddr, '', discoveryCallback
+    deviceDiscovered ipAddr, '', discoveryCallback, false
 
 module.exports = RokuSSDP

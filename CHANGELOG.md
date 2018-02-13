@@ -1,3 +1,7 @@
+## v0.1.6 - Allow auto-discovery to be disabled
+
+- Implement Settings option to disable auto-discovery
+
 ## v0.1.5 - Update dependencies
 
 - Use the latest versions of all dependent packages

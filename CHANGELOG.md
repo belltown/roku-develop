@@ -1,3 +1,7 @@
+## v0.1.7 - Resolve symbolic links in zip file
+
+- Handle symbolic links in the project directory
+
 ## v0.1.6 - Allow auto-discovery to be disabled
 
 - Implement Settings option to disable auto-discovery

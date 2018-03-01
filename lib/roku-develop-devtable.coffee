@@ -40,7 +40,8 @@ module.exports = class RokuDeviceTable
     Array.from(@deviceTable.values())
 
   sortByIPAddress: ->
-    Array.from(@deviceTable.values()).sort((a, b) => a.ip32 - b.ip32)
+    Array.from(@deviceTable.values()).sort((a, b) =>
+      ipAddrTo32(a.ipAddr) - ipAddrTo32(b.ipAddr))
 
   fromJsonString: (jsonString) ->
     json = null
@@ -66,10 +67,9 @@ module.exports = class RokuDeviceTable
     oldModelName    = deviceEntry.modelName
     oldModelNumber  = deviceEntry.modelNumber
 
-    # If the IP address has changed, calculate the 32-bit ip value
+    # If the IP address has changed, update the device entry with the new addr
     if deviceEntry.ipAddr isnt device.ipAddr
       deviceEntry.ipAddr = device.ipAddr
-      deviceEntry.ip32 = ipAddrTo32 device.ipAddr
 
     # Don't update the friendly name unless it was previously blank,
     # because the user could have updated the friendly name manually
@@ -101,19 +101,19 @@ ipAddrTo32 = (ipAddr) ->
   ip32 = 0
   ma = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec ipAddr
   if Array.isArray(ma) and ma.length is 5
-    # Note - don't use JavaScript's bit shift operators
-    # (ensure operands not coerced to SIGNED 32-bit integers; we need unsigned)
-    ip32 = ((ma[1] * 256 + ma[2]) * 256 + ma[3]) * 256 + ma[4]
+    d0 = parseInt(ma[1], 10)
+    d1 = parseInt(ma[2], 10)
+    d2 = parseInt(ma[3], 10)
+    d3 = parseInt(ma[4], 10)
+    ip32 = ((d0 * 256 + d1) * 256 + d2) * 256 + d3
   ip32
 
 # The device table is a Map() object with a key of Serial Number
 # The value of the Map() object has the following structure
-# Note that ip32 is used to establish the sort order
 DeviceEntry = (device) ->
   serialNumber: device.serialNumber
   ipAddr:       device.ipAddr
   friendlyName: device.friendlyName
   modelName:    device.modelName
   modelNumber:  device.modelNumber
-  ip32:         ipAddrTo32 device.ipAddr
   deploy:       true

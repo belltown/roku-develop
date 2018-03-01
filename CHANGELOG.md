@@ -1,3 +1,10 @@
+## v0.1.8 - Implement scrollbars for device table
+
+- Add scrollbars, if necessary, to Roku device list
+- Add Show/Hide Unchecked button to device list
+- Implement 15 second timeout when attempting to connect
+- Update documentation link to Roku Developer Setup Guide
+
 ## v0.1.7 - Resolve symbolic links in zip file
 
 - Handle symbolic links in the project directory

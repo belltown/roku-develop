@@ -2,14 +2,18 @@
 
 module.exports = class RokuDevelopView
 
-  constructor: (newDeviceCallback, clearDevicesCallback) ->
+  constructor: (viewState, newDeviceCallback, clearDevicesCallback) ->
+    @hideUnchecked = (viewState and viewState.hideUnchecked) or false
+
     @subscriptions = new CompositeDisposable
 
     # Root element; style is defined in /styles/roku-develop.less
     @element = document.createElement 'div'
     @element.classList.add 'roku-develop'
 
+    # Container for the device table
     @deviceContainer = document.createElement 'div'
+    @deviceContainer.classList.add 'deviceContainer'
 
     # Input text field (initially hidden) used to manually add an ip address
     # Add New Device button displays it; ESC key hides it
@@ -46,9 +50,11 @@ module.exports = class RokuDevelopView
     buttonAndDeviceContainer = document.createElement 'div'
     buttonAndDeviceContainer.classList.add 'buttonAndDeviceContainer'
 
+    # Contains all the buttons
     buttonContainer = document.createElement 'div'
     buttonContainer.classList.add 'buttonContainer'
 
+    # Add Device button
     buttonRow1 = document.createElement 'div'
     addButton = document.createElement 'button'
     addButton.appendChild document.createTextNode 'Add Device'
@@ -63,10 +69,10 @@ module.exports = class RokuDevelopView
       else
         ipInputContainer.style.display = 'block'
         ipInput.focus()
-    buttonContainer.appendChild addButton
     buttonRow1.appendChild addButton
     buttonContainer.appendChild buttonRow1
 
+    # Clear List button
     buttonRow2 = document.createElement 'div'
     clearButton = document.createElement 'button'
     clearButton.appendChild document.createTextNode 'Clear List'
@@ -78,9 +84,41 @@ module.exports = class RokuDevelopView
     clearButton.addEventListener 'click', () =>
       clearDevicesCallback()
       @update(null)
-    buttonContainer.appendChild clearButton
     buttonRow2.appendChild clearButton
     buttonContainer.appendChild buttonRow2
+
+    # Show/Hide Unchecked button (toggles between Show and Hide)
+    hide = if @hideUnchecked then 'Show' else 'Hide'
+    buttonRow3 = document.createElement 'div'
+    hideUncheckedButton = document.createElement 'button'
+    hideUncheckedButton.id = 'hideUncheckedButton'
+    hideUncheckedButton.innerHTML = hide + ' Unchecked'
+    hideUncheckedButton.classList.add 'btn', 'btn-primary'
+    @subscriptions.add atom.tooltips.add(hideUncheckedButton
+      , { title: 'Show/hide unchecked devices'
+        , delay: { 'show': 100, 'hide': 100 }
+        , trigger: 'hover'})
+    hideUncheckedButton.addEventListener 'click', () =>
+      @hideUnchecked = not @hideUnchecked
+      if @hideUnchecked
+        hideUncheckedButton.innerHTML = 'Show Unchecked'
+      else
+        hideUncheckedButton.innerHTML = 'Hide Unchecked'
+      table = document.getElementById('deviceTableId')
+      if table
+        rows = table.rows
+        for i in [0...rows.length]
+          row = rows[i]
+          checked = row.querySelector('input[type=checkbox]').checked
+          # Always display device entry if checkbox is checked
+          # If checkbox is not checked, then only display device entry
+          # if Show Unchecked is in effect
+          if checked or not @hideUnchecked
+            row.style.display = 'table-row'
+          else
+            row.style.display = 'none'
+    buttonRow3.appendChild hideUncheckedButton
+    buttonContainer.appendChild buttonRow3
 
     buttonAndDeviceContainer.appendChild buttonContainer
     buttonAndDeviceContainer.appendChild @deviceContainer
@@ -98,12 +136,15 @@ module.exports = class RokuDevelopView
     while @deviceContainer.firstChild
       @deviceContainer.removeChild @deviceContainer.firstChild
 
+    # Check if device table is empty
     if not rokuDeviceTable or rokuDeviceTable.isEmpty()
       noDevice = document.createElement 'div'
       noDevice.appendChild document.createTextNode 'No devices found yet ...'
       @deviceContainer.appendChild noDevice
+    # If device table is not empty, construct an html table
     else
       table = document.createElement 'table'
+      table.id = 'deviceTableId'
       table.classList.add 'deviceTable'
       @subscriptions.add atom.tooltips.add(table
         , { title: '<code>Ctrl-Alt-;</code> to deploy to checked devices'
@@ -112,14 +153,23 @@ module.exports = class RokuDevelopView
           , html: true})
 
       for roku in rokuDeviceTable.sortByIPAddress()
-        # 'do' to ensure correct 'roku' variable instance referenced in event
+        # Preserve access to class instance variables inside event handler
+        self = @
+        # 'do' to ensure correct 'roku' loop variable instance referenced in event
         do (roku) ->
           checkbox = document.createElement 'input'
           checkbox.classList.add 'input-checkbox'
           checkbox.type = 'checkbox'
           checkbox.checked = roku.deploy
+          # Always display device entry if checkbox is checked
+          # If checkbox is not checked, then only display device entry
+          # if Show Unchecked is in effect
           checkbox.addEventListener 'click', () =>
             roku.deploy = checkbox.checked
+            if roku.deploy or not self.hideUnchecked
+              tr.style.display = 'table-row'
+            else
+              tr.style.display = 'none'
 
           tr              = document.createElement 'tr'
           tdCheckbox      = document.createElement 'td'
@@ -132,9 +182,8 @@ module.exports = class RokuDevelopView
           tdCheckbox.appendChild      checkbox
           tdIpAddr.appendChild        document.createTextNode(roku.ipAddr)
           tdSerialNumber.appendChild  document.createTextNode(roku.serialNumber)
-          tdModelNumber.appendChild   document.createTextNode(roku.modelNumber)
-          tdModelName.appendChild     document.createTextNode(roku.modelName)
-          tdFriendlyName.appendChild  document.createTextNode(roku.friendlyName)
+          tdModelNumber.appendChild   document.createTextNode(roku.modelNumber + ':' + roku.modelName)
+          tdFriendlyName.appendChild  document.createTextNode('[' + roku.friendlyName + ']')
 
           tr.appendChild tdCheckbox
           tr.appendChild tdIpAddr
@@ -142,6 +191,14 @@ module.exports = class RokuDevelopView
           tr.appendChild tdModelNumber
           tr.appendChild tdModelName
           tr.appendChild tdFriendlyName
+
+          # Always display device entry if checkbox is checked
+          # If checkbox is not checked, then only display device entry
+          # if Show Unchecked is in effect
+          if roku.deploy or not self.hideUnchecked
+            tr.style.display = 'table-row'
+          else
+            tr.style.display = 'none'
 
           table.appendChild tr
 
@@ -152,3 +209,8 @@ module.exports = class RokuDevelopView
     while @element.firstChild
       @element.removeChild @element.firstChild
     @element.remove()
+
+  # Preserve state of Show/Hide Unchecked button across sessions
+  serialize: -> {
+      hideUnchecked: @hideUnchecked
+  }

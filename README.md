@@ -22,7 +22,7 @@ For more info on Atom, read the
 Go to Settings <kbd>Ctrl+,</kbd> then **Packages**. Search for `roku-develop`.
 
 Enter the Roku developer settings password. See the Roku
-[Developer Setup Guide](https://github.com/rokudev/docs/blob/master/develop/getting-started/setup-guide.md#1-setup-your-roku-device-to-enable-developer-settings) for instructions on
+[Developer Setup Guide](https://developer.roku.com/develop/getting-started/setup-guide) for instructions on
 setting the Roku developer password.
 **Ensure that Developer Mode is enabled for each Roku device.**
 
@@ -106,9 +106,14 @@ it responds to ECP requests.
 ---
 
 `Clear List` button will remove all automatically-discovered and manually-added
-devices from the list. Automatic discovery (if enabled in Settings) will re-add devices.
+devices from the list.
+Automatic discovery (if enabled in Settings) will re-add devices.
 
 ---
+
+`Hide Unchecked`/`Show Unchecked` button toggles the device list display
+to either show only checked devices (Hide Unchecked), or show all devices
+(Show Unchecked).
 
 When deploying a project, one of the project's files needs to be open in the
 active editor pane on display when the deploy command is issued.

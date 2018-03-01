@@ -87,6 +87,11 @@ module.exports        = RokuDevelop =
   # Activation commands are specified in package.json
   #
   activate: (state) ->
+    if state and state.view
+      viewState = state.view
+    else
+      viewState = null
+
     # Get Atom config data, and add event-handlers for config updates
 
     @excludedPaths    = atom.config.get 'roku-develop.excludedPaths'
@@ -140,7 +145,8 @@ module.exports        = RokuDevelop =
     @rokuDeviceTable.fromJsonString deviceTableJsonString
 
     # The view sets up the DOM element used for the displayed device list
-    @rokuDevelopView = new RokuDevelopView(@newDeviceCallback.bind(this),
+    @rokuDevelopView = new RokuDevelopView(viewState,
+                                           @newDeviceCallback.bind(this),
                                            @clearDevicesCallback.bind(this))
 
     # Place the view's DOM element in a panel at the bottom of the editor pane
@@ -182,7 +188,9 @@ module.exports        = RokuDevelop =
   # Any JSON returned here will be passed as an argument to activate()
   # the next time the package is loaded
   #
-  serialize: ->
+  serialize: -> {
+    view: @rokuDevelopView.serialize()
+  }
 
   #
   # Called from the view when a new device has been manually entered
@@ -485,9 +493,9 @@ module.exports        = RokuDevelop =
 
     url = "http://#{ip}:8060/keypress/Home"
 
-    request.post(url, (error, response, body) =>
+    request.post({url: url, timeout: 15000}, (error, response, body) =>
       if error
-        atom.notifications.addWarning 'Connect error: ' + error.message,
+        atom.notifications.addWarning 'Unable to connect to ' + ip + ': '+ error.message,
                                       {dismissable: true}
       else if not response
         atom.notifications.addWarning 'No response received from ' + ip,
@@ -522,14 +530,14 @@ module.exports        = RokuDevelop =
       'pass': @rokuPassword
       'sendImmediately': false
 
-    request.post {url: url, formData: formData, auth: auth}
+    request.post {url: url, formData: formData, auth: auth, timeout: 15000}
                   ,(error, response, body) =>
       console.log 'error', error
       console.log 'response', response
       console.log 'body', body
       if error
         atom.notifications.addWarning 'Upload error for ' + ip +
-                                      ' ' + error.message,
+                                      ': ' + error.message,
                                       {dismissable: true}
       else if not response
         atom.notifications.addWarning 'No upload response from ' + ip,

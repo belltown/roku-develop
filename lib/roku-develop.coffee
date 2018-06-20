@@ -530,7 +530,8 @@ module.exports        = RokuDevelop =
       'pass': @rokuPassword
       'sendImmediately': false
 
-    request.post {url: url, formData: formData, auth: auth, timeout: 15000}
+    #request.post {url: url, formData: formData, auth: auth, timeout: 15000}
+    request.post {url: url, formData: formData, auth: auth, timeout: 60000}
                   ,(error, response, body) =>
       console.log 'error', error
       console.log 'response', response

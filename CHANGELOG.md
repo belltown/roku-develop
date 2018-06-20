@@ -1,3 +1,8 @@
+## v0.1.9 - Increase request timeout when uploading to device
+
+- Change request timeout from 15 to 60 seconds when uploading to device
+- Use latest versions of all dependent packages
+
 ## v0.1.8 - Implement scrollbars for device table
 
 - Add scrollbars, if necessary, to Roku device list

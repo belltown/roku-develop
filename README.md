@@ -46,6 +46,26 @@ channel. Uncheck this box for faster deployment, provided the Roku does not cras
 `Automatically discover Rokus on the local network` - if checked, will automatically attempt to discover all Rokus on the local network.
 If un-checked, will disable automatic discovery, only allowing Roku devices to be manually entered.
 
+#### .rokudevignore
+
+Ignores can optionally be placed in the file `.rokudevignore`. This file should 
+reside in the same directory as the manifest file.
+
+Rules:
+
+- Lines beginning with a hash (`#`) will be ignored.
+- Lines beginning with a exclamation mark (`!`) will be treated as unignores.
+- All other lines will be treated as ignores.
+- All lines should be relative paths with the root starting at .rokudevignore's 
+  containing directory
+- Lines consisting of a file or directory name, with or without a trailing 
+  forward slash will be applied against any file or directory name in the 
+  directory hierarchy.
+- Unignores can be used to specify that a file should not be ignored. This is
+  useful when specifying a file/directory name to be ignored globally, but not
+  wanting to ignore a specific file.
+- Path separators in .rokudevignore are forward slashes.
+
 ### Keyboard shortcuts
 
 roku-develop uses two commands, ```roku-develop:toggle```

@@ -243,6 +243,10 @@ module.exports        = RokuDevelop =
                                     {dismissable: true}
       return
 
+    # Show a deploy message here. Async operations can cause the other
+    # message to be delayed, appearing like a failure.
+    atom.notifications.addInfo 'Starting deploy'
+
     # Compress the project directory, deploying when finished
     try
       @compressProject()
@@ -419,19 +423,31 @@ module.exports        = RokuDevelop =
 
     archive.pipe outputStream
 
-    # Compile a list of files and directories to be compressed
-    @addFilesToArchive(archive, @projectDirectory)
+    @getRokuDevIgnores (rokuDevIgnores) =>
+      console.debug(rokuDevIgnores)
+      # Compile a list of files and directories to be compressed
+      @addFilesToArchive archive, @projectDirectory, rokuDevIgnores
 
-    # Finish the compression, calling the output stream's close handler
-    archive.finalize()
+      # Finish the compression, calling the output stream's close handler
+      archive.finalize()
+
     return true
 
-  addFilesToArchive: (archive, parentEntry) ->
+  addFilesToArchive: (archive, parentEntry, rokuDevIgnores) ->
     for entry in parentEntry.getEntriesSync()
       baseName = entry.getBaseName()
       pathname = entry.getRealPathSync()
+      relPath = entry.getPath()
+        .replace(@projectDirectory.getRealPathSync(), '')
+      if relPath.startsWith('/')
+        relPath = relPath.replace('/', '')
       # Ignore hidden files and directories, and excluded files and directories
-      if  not (baseName.startsWith '.') and (baseName not in @excludedPathList)
+      if not (baseName.startsWith '.') and
+          (baseName not in @excludedPathList) and
+          (baseName not in rokuDevIgnores.ignores or
+            relPath in rokuDevIgnores.unignores) and
+          (relPath not in rokuDevIgnores.ignores or
+            relPath in rokuDevIgnores.unignores)
         if entry.isFile()
           # Queue a file for compression, but not the zip file itself
           if pathname isnt @zipFilePath
@@ -440,7 +456,46 @@ module.exports        = RokuDevelop =
           # Queue a directory for compression, but not the zip file directory
           zipDirectoryPath = path.dirname @zipFilePath
           if (pathname isnt zipDirectoryPath) and (entry.getPath() isnt zipDirectoryPath)
-            @addFilesToArchive(archive, entry)
+            @addFilesToArchive archive, entry, rokuDevIgnores
+      else
+        console.debug("Ignored: %s", relPath)
+
+  #
+  # Return an associative array with the fields "ignores" and "unignores"
+  # containing arrays of files to be ignored or not ignored when archiving
+  # for deployment
+  #
+  getRokuDevIgnores: (callback) ->
+    # Read the .rokudevignore file if it is available
+    rokuDevIgnorePath = path.join @projectDirectory.getRealPathSync(),
+      '.rokudevignore'
+    fs.readFile rokuDevIgnorePath, 'utf8', (e, data) =>
+      if e
+        console.debug('No ignore file loaded at %s', rokuDevIgnorePath)
+        callback {
+          ignores: [],
+          unignores: []
+        }
+      else
+        ignores = []
+        unignores = []
+        ignoresLines = data.split(/[\r?\n?]+/)
+        for ignore in ignoresLines
+          ignore = ignore.trim()
+          if ignore.endsWith('/')
+            ignore = ignore.substring(0, ignore.length - 1)
+          if ignore.length == 0
+            continue
+          else if ignore.startsWith('#')
+            continue
+          else if ignore.startsWith('!')
+            unignores.push(ignore.replace('!', ''))
+          else
+            ignores.push(ignore)
+        callback {
+          ignores: ignores,
+          unignores: unignores
+        }
 
   #
   # Determine the pathname used for the compressed zip file

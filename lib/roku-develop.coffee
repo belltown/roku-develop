@@ -322,7 +322,7 @@ module.exports        = RokuDevelop =
       pass: @rokuPassword,
       sendImmediately: false
     }
-    request.get {url: url, timeout: 15000, auth: auth}, \
+    request.get {url: url, timeout: 15000, auth: auth, encoding: null}, \
         (error, response, body) =>
       if error or not response or response.statusCode != 200 or not body
         atom.notifications.addWarning 'Failed to download application package',

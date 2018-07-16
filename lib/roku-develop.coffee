@@ -8,26 +8,28 @@ Config                = require 'electron-config'
 RokuDevelopView       = require './roku-develop-view.coffee'
 RokuDeviceTable       = require './roku-develop-devtable.coffee'
 RokuSSDP              = require './roku-develop-ssdp.coffee'
+util                  = require 'util'
 
 module.exports        = RokuDevelop =
 
-  excludedPaths:      null
-  excludedPathList:   null
-  zipFileDirectory:   null
-  rokuUserId:         null
-  rokuPassword:       null
-  manifestBuild:      null
-  saveOnDeploy:       null
-  homeBeforeDeploy:   null
-  autoDiscover:       null
-  rokuDeviceTable:    null
-  rokuDevelopView:    null
-  subscriptions:      null
-  myConfig:           null
-  panel:              null
-  rokuIPList:         null
-  projectDirectory:   null
-  zipFilePath:        null
+  excludedPaths:       null
+  excludedPathList:    null
+  zipFileDirectory:    null
+  rokuUserId:          null
+  rokuPassword:        null
+  manifestBuild:       null
+  saveOnDeploy:        null
+  homeBeforeDeploy:    null
+  autoDiscover:        null
+  rokuDeviceTable:     null
+  rokuDevelopView:     null
+  subscriptions:       null
+  myConfig:            null
+  panel:               null
+  rokuIPList:          null
+  projectDirectory:    null
+  zipFilePath:         null
+  rokuPackagePassword: null
 
   # Package config schema (Settings)
   config:
@@ -52,6 +54,10 @@ module.exports        = RokuDevelop =
       type: 'string'
       default: ''
       order: 4
+    rokuPackagePassword:
+      type: 'string'
+      default: ''
+      order: 5
     manifestBuild:
       title: 'Increment manifest build_version'
       type: 'integer'
@@ -62,25 +68,25 @@ module.exports        = RokuDevelop =
         {value: 2, description: 'Use date: yyyymmdd'}
         {value: 3, description: 'Use date/time: yymmddhhmm'}
       ]
-      order: 5
+      order: 6
     saveOnDeploy:
       title: 'Save On Deploy (saves current file before deployment)'
       type: 'boolean'
       default: true
-      order: 6
+      order: 7
     homeBeforeDeploy:
       title: 'Send Home Keypress Before Deploy'
       description: 'Use if deploying a Scene Graph channel
                     causes the Roku to crash'
       type: 'boolean'
       default: false
-      order: 7
+      order: 8
     autoDiscover:
       title: 'Automatically discover Rokus on the local network'
       description: 'Un-check to only allow manual device entry'
       type: 'boolean'
       default: true
-      order: 8
+      order: 9
 
   #
   # Invoked by Atom one time only, when an activation command is issued
@@ -94,15 +100,16 @@ module.exports        = RokuDevelop =
 
     # Get Atom config data, and add event-handlers for config updates
 
-    @excludedPaths    = atom.config.get 'roku-develop.excludedPaths'
-    @excludedPathList = (item.trim() for item in @excludedPaths.split ',')
-    @zipFileDirectory = atom.config.get 'roku-develop.zipFileDirectory'
-    @rokuUserId       = atom.config.get 'roku-develop.rokuUserId'
-    @rokuPassword     = atom.config.get 'roku-develop.rokuPassword'
-    @manifestBuild    = atom.config.get 'roku-develop.manifestBuild'
-    @saveOnDeploy     = atom.config.get 'roku-develop.saveOnDeploy'
-    @homeBeforeDeploy = atom.config.get 'roku-develop.homeBeforeDeploy'
-    @autoDiscover     = atom.config.get 'roku-develop.autoDiscover'
+    @excludedPaths       = atom.config.get 'roku-develop.excludedPaths'
+    @excludedPathList    = (item.trim() for item in @excludedPaths.split ',')
+    @zipFileDirectory    = atom.config.get 'roku-develop.zipFileDirectory'
+    @rokuUserId          = atom.config.get 'roku-develop.rokuUserId'
+    @rokuPassword        = atom.config.get 'roku-develop.rokuPassword'
+    @manifestBuild       = atom.config.get 'roku-develop.manifestBuild'
+    @saveOnDeploy        = atom.config.get 'roku-develop.saveOnDeploy'
+    @homeBeforeDeploy    = atom.config.get 'roku-develop.homeBeforeDeploy'
+    @autoDiscover        = atom.config.get 'roku-develop.autoDiscover'
+    @rokuPackagePassword = atom.config.get 'roku-develop.rokuPackagePassword'
 
     atom.config.observe 'roku-develop.excludedPaths', (newValue) =>
       @excludedPaths = newValue
@@ -132,6 +139,9 @@ module.exports        = RokuDevelop =
       if not @autoDiscover and newValue
         RokuSSDP.discover @discoveryCallback.bind(this)
       @autoDiscover = newValue
+
+    atom.config.observe 'roku-develop.rokuPackagePassword', (newValue) =>
+      @rokuPackagePassword = newValue
 
     # Use a config file in Atom's config directory to persist the device table
     @myConfig = new Config({name: 'roku-develop-config'})
@@ -166,6 +176,9 @@ module.exports        = RokuDevelop =
 
     @subscriptions.add atom.commands.add  'atom-workspace',
                                           'roku-develop:deploy': => @deploy()
+
+    @subscriptions.add atom.commands.add  'atom-workspace',
+                                          'roku-develop:package': => @package()
 
     # Initiate device discovery
     # 'bind' ensures callback executes in the context of the main package code
@@ -217,30 +230,7 @@ module.exports        = RokuDevelop =
   # Invoked when the roku-develop:deploy command is issued
   #
   deploy: ->
-    # Make sure the password is set up
-    if not @rokuPassword
-      atom.notifications.addWarning 'You must set your password
-                                     on the Settings page (Ctrl+comma)',
-                                    {
-                                      dismissable: true
-                                      detail: 'Go to Settings page > Packages
-                                              > roku-develop'
-                                    }
-      return
-
-    # Check that at least one device exists
-    if @rokuDeviceTable.getValues().length < 1
-      atom.notifications.addWarning 'No devices found', {dismissable: true}
-      return
-
-    # Get the list of deployment ip addresses
-    @rokuIPList = (entry.ipAddr for entry in @rokuDeviceTable.getValues() \
-                    when entry.deploy)
-
-    # Check that at least one discovered device is selected
-    if @rokuIPList.length < 1
-      atom.notifications.addWarning 'No devices marked for deployment',
-                                    {dismissable: true}
+    if not @checkSettings()
       return
 
     # Show a deploy message here. Async operations can cause the other
@@ -255,6 +245,172 @@ module.exports        = RokuDevelop =
       atom.notifications.addError 'Exception when creating zip file',
                                   {dismissable: true, detail: e.message}
 
+  #
+  # Invoked when the roku-develop:package command is issued
+  #
+  package: ->
+    if not @checkSettings()
+      return
+
+    if not @rokuPackagePassword
+      atom.notifications.addWarning 'Package password not set',
+                                    {
+                                      dismissable: true,
+                                      detail: 'Go to settings > Packages >
+                                               roku-develop'
+                                    }
+      return
+
+    # Check that only one discovered device is selected
+    if @rokuIPList.length != 1
+      atom.notifications.addWarning 'Only one device should be selected for
+                                     packaging', {dismissable: true}
+      return
+
+    # Ensure the project directory is set
+    if not @findProjectDirectory()
+      return
+
+    atom.notifications.addInfo 'Packaging application'
+
+    @getPackageAppName (error, appName) =>
+      if error
+        atom.notifications.addWarning 'Failed to get package name',
+          {dismissable: true, detail: error.message}
+        return
+      # Send the package post request
+      ip = @rokuIPList[0]
+      url = "http://#{ip}/plugin_package"
+      form = {
+        mysubmit: 'Package',
+        pkg_time: new Date().getTime().toString(),
+        app_name: appName,
+        passwd: @rokuPackagePassword
+      }
+      auth = {
+        user: @rokuUserId,
+        pass: @rokuPassword,
+        sendImmediately: false
+      }
+      request.post {url: url, timeout: 15000, formData: form, auth: auth}, \
+          (error, response, body) =>
+        if error or not response or response.statusCode != 200 or not body
+          atom.notifications.addWarning 'Failed to package application',
+            {dismissable: true, detail: if error then error.message else ""}
+        else if body.toUpperCase().indexOf('HTTP-EQUIV="REFRESH"') != -1
+          atom.notifications.addWarning 'No application installed',
+            {dismissable: true, detail: 'Deploy first'}
+        else if body.toUpperCase().indexOf('SUCCESS') != -1
+          packageNameRegex = /\/([^\/]*\.pkg)"/im
+          matcher = packageNameRegex.exec body
+          if matcher and matcher.length == 2
+            @downloadPackage ip, matcher[1]
+          else
+            atom.notifications.addWarning 'Failed to parse response for
+                                           package name', {dismissable: true}
+        else
+          atom.notifications.addWarning 'Failed to package application',
+            {dismissable: true}
+
+  #
+  # Try to download a package from a roku
+  #
+  downloadPackage: (ip, packageName) ->
+    url = "http://#{ip}/pkgs/#{packageName}"
+    auth = {
+      user: @rokuUserId,
+      pass: @rokuPassword,
+      sendImmediately: false
+    }
+    request.get {url: url, timeout: 15000, auth: auth}, \
+        (error, response, body) =>
+      if error or not response or response.statusCode != 200 or not body
+        atom.notifications.addWarning 'Failed to download application package',
+          {dismissable: true, detail: if error then error.message else ""}
+        return
+      outPath = @getZipFilePath packageName
+      if not outPath
+        return
+      fs.writeFile outPath, body, (error) =>
+        if error
+          atom.notifications.addInfo 'Failed to write package',
+            {dismissable: true, detail: error.message}
+          return
+        atom.notifications.addInfo 'Finished packaging application',
+          {dismissable: true}
+
+  #
+  # Get the application name in the format "Name/Version" from the manifest
+  # data
+  #
+  getPackageAppName: (callback) ->
+    manifestPath = path.join @projectDirectory.getRealPathSync(), 'manifest'
+    fs.readFile manifestPath, 'utf8', (error, data) =>
+      if error
+        callback(error)
+      else
+        entriesRegex = /^([^\s=]+)\s*=(.*)$/gim
+        matches = null
+        title = null
+        major_version = null
+        minor_version = null
+        build_version = null
+        matches = true
+        while matches
+          matches = entriesRegex.exec data
+          if matches and matches.length == 3
+            key = matches[1]
+            val = matches[2]
+            if key == 'title'
+              title = val
+            else if key == 'screensaver_title' and not title
+              title = val
+            else if key == 'major_version'
+              major_version = val
+            else if key == 'minor_version'
+              minor_version = val
+            else if key == 'build_version'
+              build_version = val
+        if not title or not major_version or not minor_version or
+            not build_version
+          callback(new Error('Could not determine app title and version from
+                              manifest'))
+          return
+        callback(null, util.format("%s/%s.%s.%s", title, major_version,
+          minor_version, build_version))
+
+
+  #
+  # Check for a set password and at least one deploy device
+  # Returns false on error
+  #
+  checkSettings: ->
+    # Make sure the password is set up
+    if not @rokuPassword
+      atom.notifications.addWarning 'You must set your password
+                                     on the Settings page (Ctrl+comma)',
+                                    {
+                                      dismissable: true
+                                      detail: 'Go to Settings page > Packages
+                                              > roku-develop'
+                                    }
+      return false
+
+    # Check that at least one device exists
+    if @rokuDeviceTable.getValues().length < 1
+      atom.notifications.addWarning 'No devices found', {dismissable: true}
+      return false
+
+    # Get the list of deployment ip addresses
+    @rokuIPList = (entry.ipAddr for entry in @rokuDeviceTable.getValues() \
+                    when entry.deploy)
+
+    # Check that at least one discovered device is selected
+    if @rokuIPList.length < 1
+      atom.notifications.addWarning 'No devices marked for deployment',
+                                    {dismissable: true}
+      return false
+    return true
   #
   # Called from RokuSSDP whenever a device has been discovered
   # If this is an automatically-discovered device,
@@ -284,7 +440,34 @@ module.exports        = RokuDevelop =
   # This allows the user to have multiple Roku projects open in Atom
   #
   compressProject: ->
+    # Don't attempt to compress a project without a 'source' directory
+    if not @findProjectDirectory()
+      return
 
+    # Determine the zip file's path name, creating the directory if necessary
+    @zipFilePath = @getZipFilePath()
+    if not @zipFilePath
+      return
+
+    # Save the file -- this will update the timestamp even if nothing changed
+    if @saveOnDeploy
+      try
+        atom.workspace.getActiveTextEditor().save()
+      catch e
+        console.warn 'Can\'t save this file: %O', e
+        atom.notifications.addError 'Can\'t save this file.
+                                     Check you have write access to the file',
+                                    {dismissable: true, detail: e.message}
+        return
+
+    # Increment the build number in the manifest file, then continue deployment
+    @incrementManifestBuild()
+
+  #
+  # Try to find the project directory by searching up the hierarchy from the
+  # active file's path. Sets @projectDirectory. Returns false on failure.
+  #
+  findProjectDirectory: ->
     # Get the active TextEditor object
     activeTextEditor = atom.workspace.getActiveTextEditor()
 
@@ -322,31 +505,13 @@ module.exports        = RokuDevelop =
           not @projectDirectory.getSubdirectory('source').existsSync()
       @projectDirectory = @projectDirectory.getParent()
 
-    # Don't attempt to compress a project without a 'source' directory
+    # Fail if it does not exist
     if not @projectDirectory.getSubdirectory('source').existsSync()
       atom.notifications.addWarning 'Cannot find project source directory',
                         {detail: 'Open a project file before deploying',
                         dismissable: true}
-      return
-
-    # Determine the zip file's path name, creating the directory if necessary
-    @zipFilePath = @getZipFilePath()
-    if not @zipFilePath
-      return
-
-    # Save the file -- this will update the timestamp even if nothing changed
-    if @saveOnDeploy
-      try
-        activeTextEditor.save()
-      catch e
-        console.warn 'Can\'t save this file: %O', e
-        atom.notifications.addError 'Can\'t save this file.
-                                     Check you have write access to the file',
-                                    {dismissable: true, detail: e.message}
-        return
-
-    # Increment the build number in the manifest file, then continue deployment
-    @incrementManifestBuild()
+      return false
+    return true
 
   #
   # Auto-increment the manifest build number if necessary, then deploy
@@ -500,7 +665,8 @@ module.exports        = RokuDevelop =
   #
   # Determine the pathname used for the compressed zip file
   #
-  getZipFilePath: ->
+  getZipFilePath: (name) ->
+    name = name or "bundle.zip"
     zipFileDirectoryNorm = path.normalize @zipFileDirectory.trim()
     if path.isAbsolute zipFileDirectoryNorm
       zipDirectoryPath = zipFileDirectoryNorm
@@ -508,7 +674,7 @@ module.exports        = RokuDevelop =
       zipDirectoryPath = path.join @projectDirectory.getRealPathSync()
                                    , zipFileDirectoryNorm
 
-    zipFilePath = path.join zipDirectoryPath, 'bundle.zip'
+    zipFilePath = path.join zipDirectoryPath, name
 
     # Check if output directory already exists
     try

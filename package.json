@@ -13,7 +13,8 @@
   "activationCommands": {
     "atom-workspace": [
       "roku-develop:toggle",
-      "roku-develop:deploy"
+      "roku-develop:deploy",
+      "roku-develop:package"
     ]
   },
   "repository": "https://github.com/belltown/roku-develop",

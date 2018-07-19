@@ -604,6 +604,7 @@ module.exports        = RokuDevelop =
       pathname = entry.getRealPathSync()
       relPath = entry.getPath()
         .replace(@projectDirectory.getRealPathSync(), '')
+        .replace(/\\/g, '/')
       if relPath.startsWith('/')
         relPath = relPath.replace('/', '')
       # Ignore hidden files and directories, and excluded files and directories

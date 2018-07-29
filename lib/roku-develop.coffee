@@ -616,7 +616,7 @@ module.exports        = RokuDevelop =
           # Walk up the path to determine if there is an unignore
           parent = entry.getParent()
           parentRelPath = path.relative(@projectDirectory.getPath(),
-            parent.getPath())
+            parent.getPath()).replace(/\\/g, '/')
           while fileIsInIgnoredDirectory and parentRelPath != '' and
               (!parentRelPath.startsWith('..'))
             for unignore in rokuDevIgnores.unignores
@@ -631,7 +631,7 @@ module.exports        = RokuDevelop =
                   break
             parent = parent.getParent()
             parentRelPath = path.relative(@projectDirectory.getPath(),
-              parent.getPath())
+              parent.getPath()).replace(/\\/g, '/')
           # Check base name and relative path against ignores
           if (baseName not in rokuDevIgnores.ignores and
               relPath not in rokuDevIgnores.ignores and

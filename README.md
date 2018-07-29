@@ -54,7 +54,7 @@ reside in the same directory as the manifest file.
 Rules:
 
 - Lines beginning with a hash (`#`) will be ignored.
-- Lines beginning with a exclamation mark (`!`) will be treated as unignores.
+- Lines beginning with an exclamation mark (`!`) will be treated as unignores.
 - All other lines will be treated as ignores.
 - All lines should be relative paths with the root starting at .rokudevignore's 
   containing directory

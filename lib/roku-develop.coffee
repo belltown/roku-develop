@@ -591,63 +591,32 @@ module.exports        = RokuDevelop =
     @getRokuDevIgnores (rokuDevIgnores) =>
       console.debug(rokuDevIgnores)
       # Compile a list of files and directories to be compressed
-      @addFilesToArchive archive, @projectDirectory, rokuDevIgnores
+      @addFilesToArchive archive, @projectDirectory, rokuDevIgnores, false
 
       # Finish the compression, calling the output stream's close handler
       archive.finalize()
 
     return true
 
-  addFilesToArchive: (archive, parentEntry, rokuDevIgnores) ->
+  addFilesToArchive: (archive, parentEntry, rokuDevIgnores, beingIgnored) ->
+    zipDirectoryPath = path.dirname @zipFilePath
+    projectPath = @projectDirectory.getPath()
+
     for entry in parentEntry.getEntriesSync()
+      entryPath = entry.getPath()
       baseName = entry.getBaseName()
       pathname = entry.getRealPathSync()
-      relPath = path.normalize(
-        path.relative(@projectDirectory.getPath(), entry.getPath()))
-        .replace(/\\/g, '/')
-      # Ignore hidden files and directories, and excluded files and directories
+      relPath = path.normalize(path.relative(projectPath, entryPath)).replace(/\\/g, '/')
+
       if not (baseName.startsWith '.') and (baseName not in @excludedPathList)
-        if entry.isFile()
-          # Check if the file is in an ignored directory
-          fileIsInIgnoredDirectory = false
-          for ignore in rokuDevIgnores.ignores
-            if relPath.startsWith(ignore)
-              fileIsInIgnoredDirectory = true
-          # Walk up the path to determine if there is an unignore
-          parent = entry.getParent()
-          parentRelPath = path.relative(@projectDirectory.getPath(),
-            parent.getPath()).replace(/\\/g, '/')
-          while fileIsInIgnoredDirectory and parentRelPath != '' and
-              (!parentRelPath.startsWith('..'))
-            for unignore in rokuDevIgnores.unignores
-              if parentRelPath == unignore
-                # Ensure the unignore is not superseded by an ignore
-                canUnignore = true
-                for ignore in rokuDevIgnores.ignores
-                  if ignore.startsWith(unignore) and relPath.startsWith(ignore)
-                    canUnignore = false
-                if canUnignore
-                  fileIsInIgnoredDirectory = false
-                  break
-            parent = parent.getParent()
-            parentRelPath = path.relative(@projectDirectory.getPath(),
-              parent.getPath()).replace(/\\/g, '/')
-          # Check base name and relative path against ignores
-          if (baseName not in rokuDevIgnores.ignores and
-              relPath not in rokuDevIgnores.ignores and
-              !fileIsInIgnoredDirectory) or
-              relPath in rokuDevIgnores.unignores
-            # Queue a file for compression, but not the zip file itself
-            if pathname isnt @zipFilePath
-              archive.file pathname,
-                {name: entry.getPath().replace(@projectDirectory.getPath(), '')}
-        else if entry.isDirectory()
-          # Queue a directory for compression, but not the zip file directory
-          zipDirectoryPath = path.dirname @zipFilePath
-          if (pathname isnt zipDirectoryPath) and (entry.getPath() isnt zipDirectoryPath)
-            @addFilesToArchive archive, entry, rokuDevIgnores
-      else
-        console.debug("Ignored: %s", relPath)
+        ignore = beingIgnored and not (relPath in rokuDevIgnores.unignores and relPath not in rokuDevIgnores.ignores)
+        ignore = ignore or (not beingIgnored and relPath in rokuDevIgnores.ignores)
+
+        if entry.isFile() and not ignore and pathname isnt @zipFilePath
+          archive.file pathname, {name: entryPath.replace(projectPath, '')}
+
+        else if entry.isDirectory() and pathname isnt zipDirectoryPath and entryPath isnt zipDirectoryPath
+          @addFilesToArchive archive, entry, rokuDevIgnores, ignore
 
   #
   # Return an associative array with the fields "ignores" and "unignores"

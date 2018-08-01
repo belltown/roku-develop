@@ -10,6 +10,10 @@
         {
         label: 'Toggle device list'
         command: 'roku-develop:toggle'
+        },
+        {
+        label: 'Package'
+        command: 'roku-develop:package'
         }
       ]
     }
@@ -27,6 +31,10 @@ menu: [
         {
         label: 'Toggle device list'
         command: 'roku-develop:toggle'
+        },
+        {
+        label: 'Package'
+        command: "roku-develop:package"
         }
       ]
     ]

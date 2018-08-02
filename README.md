@@ -10,12 +10,14 @@
 
 *Automatically increment manifest build_version.*
 
+*Create a Package file for the currently-deployed application.*
+
 ### Install the package in Atom
 
 Go to Settings <kbd>Ctrl+,</kbd> then **Install**. Search for `roku-develop`.
 
 For more info on Atom, read the
-[Atom Flight Manual](http://flight-manual.atom.io/).
+[Atom Flight Manual](https://flight-manual.atom.io/).
 
 ### Configure settings
 
@@ -48,36 +50,34 @@ If un-checked, will disable automatic discovery, only allowing Roku devices to b
 
 #### .rokudevignore
 
-Ignores can optionally be placed in the file `.rokudevignore`. This file should 
+Ignores can optionally be placed in the file `.rokudevignore`. This file should
 reside in the same directory as the manifest file.
 
 Rules:
 
-- Lines beginning with a hash (`#`) will be ignored.
-- Lines beginning with an exclamation mark (`!`) will be treated as unignores.
-- All other lines will be treated as ignores.
-- All lines should be relative paths with the root starting at .rokudevignore's 
-  containing directory
-- Lines consisting of a file or directory name, with or without a trailing 
-  forward slash will be applied against any file or directory name in the 
+- Lines beginning with a hash (`#`), and blank lines, will not be processed.
+- Lines beginning with an exclamation mark (`!`) specify unignored paths.
+- All other lines specify ignored paths.
+- Any ignored or unignored path name may either be a path name relative to
+  .rokudevignore's containing directory (the project root directory), or
+  a base name of a file or directory that may match anywhere in the
   directory hierarchy.
-- Unignores can be used to specify that a file should not be ignored. This is
-  useful when specifying a file/directory name to be ignored globally, but not
-  wanting to ignore a specific file.
-- Path separators in .rokudevignore are forward slashes.
+- Unignores can be used to explicitly include a file or directory, even if it is
+  contained within a directory that is being ignored.
+- If a path is both ignored and unignored, then the ignore takes precedence.
+- Path separators in .rokudevignore are forward slashes (even on Windows).
 
 ### Keyboard shortcuts
 
-roku-develop uses two commands, ```roku-develop:toggle```
-and ```roku-develop:deploy```,
-which may be selected from the Packages > roku-develop menu,
-or from the context (right-click) menu.
+roku-develop uses three commands: ```roku-develop:toggle```, ```roku-develop:deploy```, and ```roku-develop:package```, which may be selected from the Packages > roku-develop menu, or from the context (right-click) menu.
 
 In addition, the following keyboard shortcuts are defined by default:
 
 <kbd>Ctrl+;</kbd> (Ctrl-semicolon) - Toggle device list.
 
 <kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
+
+<kbd>Alt+;</kbd> (Alt-semicolon) - Package the currently-deployed application.
 
 If you find that these particular key combinations don't work well with
 your keyboard configuration, you can change them:
@@ -87,12 +87,13 @@ under Keybindings.
 
 2. Edit your Atom keymap.cson file
 (look under **File > Keymap...** or **Edit > Keymap...**),
-then add your own keybindings. For example, to use <kbd>Ctrl+8</kbd> and
+then add your own keybindings. For example, to use <kbd>Ctrl+7</kbd>, <kbd>Ctrl+8</kbd> and
 <kbd>Ctrl+9</kbd> instead, place the following lines at the end of
 your keymap.cson file:
 
 ```
 'atom-workspace':
+  'ctrl-7': 'roku-develop:package'
   'ctrl-8': 'roku-develop:toggle'
   'ctrl-9': 'roku-develop:deploy'
 ```
@@ -115,6 +116,15 @@ Uncheck the boxes for devices not to be deployed to.**
 ---
 
 <kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
+
+---
+
+<kbd>Alt+;</kbd> (Alt-semicolon) - Package the currently-deployed application.
+- Roku device must have been keyed using `Genkey` or `Rekey`, (see [https://sdkdocs.roku.com/display/sdkdoc/Packaging+Roku+Channels](https://sdkdocs.roku.com/display/sdkdoc/Packaging+Roku+Channels)).
+- Application packager password (24 chars, e.g. cmqsu1vhB6Q1VVTHI0eGLp==), must have been entered in Settings.
+- Only ONE Roku device may be checked.
+- Package must first be deployed to the Roku before it can be packaged.
+- Package will be written to the same directory as the Zip File Directory specified in Settings.
 
 ---
 

@@ -1,3 +1,4 @@
 'atom-workspace':
   'ctrl-;': 'roku-develop:toggle'
   'ctrl-alt-;': 'roku-develop:deploy'
+  'alt-;': 'roku-develop:package'

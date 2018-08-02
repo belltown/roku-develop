@@ -1,3 +1,8 @@
+## v0.1.10 - Add Package command and project-specific ignores
+
+- Add .rokudevignore ignore file parsing
+- Add package command
+
 ## v0.1.9 - Increase request timeout when uploading to device
 
 - Change request timeout from 15 to 60 seconds when uploading to device

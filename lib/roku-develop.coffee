@@ -297,9 +297,28 @@ module.exports        = RokuDevelop =
       }
       request.post {url: url, timeout: 15000, formData: form, auth: auth}, \
           (error, response, body) =>
-        if error or not response or response.statusCode != 200 or not body
-          atom.notifications.addWarning 'Failed to package application',
-            {dismissable: true, detail: if error then error.message else ""}
+        if error
+          atom.notifications.addWarning 'Packaging error: ' + error.message,
+                                        {dismissable: true}
+        else if not response
+          atom.notifications.addWarning 'No packaging response',
+                                        {dismissable: true}
+        else if response.statusCode is 401
+          atom.notifications.addWarning 'Authorization error ' +
+                                        response.statusCode,
+                                        {
+                                          dismissable: true,
+                                          detail: 'Make sure you entered
+                                                  your Roku user id and password
+                                                  \non the Settings page.'
+                                        }
+        else if response.statusCode isnt 200
+          atom.notifications.addWarning 'Bad packaging response code ' +
+                                        response.statusCode,
+                                        {dismissable: true}
+        else if not body
+          atom.notifications.addWarning 'No packaging response body received',
+                                        {dismissable: true}
         else if body.toUpperCase().indexOf('HTTP-EQUIV="REFRESH"') != -1
           atom.notifications.addWarning 'No application installed',
             {dismissable: true, detail: 'Deploy first'}
@@ -334,7 +353,7 @@ module.exports        = RokuDevelop =
         return
       fs.writeFile outPath, body, (error) =>
         if error
-          atom.notifications.addInfo 'Failed to write package',
+          atom.notifications.addWarning 'Failed to write package',
             {dismissable: true, detail: error.message}
           return
         atom.notifications.addInfo 'Finished packaging application'
@@ -378,7 +397,6 @@ module.exports        = RokuDevelop =
           return
         callback(null, util.format("%s/%s.%s.%s", title, major_version,
           minor_version, build_version))
-
 
   #
   # Check for a set password and at least one deploy device

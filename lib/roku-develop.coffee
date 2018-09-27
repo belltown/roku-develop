@@ -61,6 +61,12 @@ module.exports        = RokuDevelop =
                     on Roku device'
       default: ''
       order: 5
+    rokuPackageIP:
+      title: 'Default packaging device'
+      description: 'IP of device to use for packaging if multiple devices are selected.'
+      type: 'string'
+      default: ''
+      order: 6
     manifestBuild:
       title: 'Increment manifest build_version'
       type: 'integer'
@@ -71,25 +77,25 @@ module.exports        = RokuDevelop =
         {value: 2, description: 'Use date: yyyymmdd'}
         {value: 3, description: 'Use date/time: yymmddhhmm'}
       ]
-      order: 6
+      order: 7
     saveOnDeploy:
       title: 'Save On Deploy (saves current file before deployment)'
       type: 'boolean'
       default: true
-      order: 7
+      order: 8
     homeBeforeDeploy:
       title: 'Send Home Keypress Before Deploy'
       description: 'Use if deploying a Scene Graph channel
                     causes the Roku to crash'
       type: 'boolean'
       default: false
-      order: 8
+      order: 9
     autoDiscover:
       title: 'Automatically discover Rokus on the local network'
       description: 'Un-check to only allow manual device entry'
       type: 'boolean'
       default: true
-      order: 9
+      order: 10
 
   #
   # Invoked by Atom one time only, when an activation command is issued
@@ -113,6 +119,7 @@ module.exports        = RokuDevelop =
     @homeBeforeDeploy    = atom.config.get 'roku-develop.homeBeforeDeploy'
     @autoDiscover        = atom.config.get 'roku-develop.autoDiscover'
     @rokuPackagePassword = atom.config.get 'roku-develop.rokuPackagePassword'
+    @rokuPackageIP       = atom.config.get 'roku-develop.rokuPackageIP'
 
     atom.config.observe 'roku-develop.excludedPaths', (newValue) =>
       @excludedPaths = newValue
@@ -135,6 +142,9 @@ module.exports        = RokuDevelop =
 
     atom.config.observe 'roku-develop.homeBeforeDeploy', (newValue) =>
       @homeBeforeDeploy = newValue
+
+    atom.config.observe 'roku-develop.rokuPackageIP', (newValue) =>
+      @rokuPackageIP = newValue
 
     atom.config.observe 'roku-develop.autoDiscover', (newValue) =>
       # If auto-discovery was previously disabled, but is now being enabled,
@@ -266,9 +276,15 @@ module.exports        = RokuDevelop =
 
     # Check that only one discovered device is selected
     if @rokuIPList.length != 1
-      atom.notifications.addWarning 'Only one device should be selected for
-                                     packaging', {dismissable: true}
-      return
+      if not @rokuPackageIP?.length
+        atom.notifications.addWarning 'Either select only a single device,
+                                       or set a default packaging device.', {dismissable: true}
+        return
+
+      if @rokuPackageIP not in @rokuIPList
+        atom.notifications.addWarning 'The default packaging device is not
+                                       in the selected device list.', {dismissable: true}
+        return
 
     # Ensure the project directory is set
     if not @findProjectDirectory()
@@ -282,7 +298,10 @@ module.exports        = RokuDevelop =
           {dismissable: true, detail: error.message}
         return
       # Send the package post request
-      ip = @rokuIPList[0]
+      if @rokuIPList.length != 1
+        ip = @rokuPackageIP
+      else
+        ip = @rokuIPList[0]
       url = "http://#{ip}/plugin_package"
       form = {
         mysubmit: 'Package',

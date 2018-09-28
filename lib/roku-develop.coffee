@@ -30,6 +30,7 @@ module.exports        = RokuDevelop =
   projectDirectory:    null
   zipFilePath:         null
   rokuPackagePassword: null
+  rokuPackageSN:       null
 
   # Package config schema (Settings)
   config:
@@ -61,6 +62,12 @@ module.exports        = RokuDevelop =
                     on Roku device'
       default: ''
       order: 5
+    rokuPackageSN:
+      title: 'Default packaging device'
+      description: 'Serial number of device to use for packaging if multiple devices are selected.'
+      type: 'string'
+      default: ''
+      order: 6
     manifestBuild:
       title: 'Increment manifest build_version'
       type: 'integer'
@@ -71,25 +78,25 @@ module.exports        = RokuDevelop =
         {value: 2, description: 'Use date: yyyymmdd'}
         {value: 3, description: 'Use date/time: yymmddhhmm'}
       ]
-      order: 6
+      order: 7
     saveOnDeploy:
       title: 'Save On Deploy (saves current file before deployment)'
       type: 'boolean'
       default: true
-      order: 7
+      order: 8
     homeBeforeDeploy:
       title: 'Send Home Keypress Before Deploy'
       description: 'Use if deploying a Scene Graph channel
                     causes the Roku to crash'
       type: 'boolean'
       default: false
-      order: 8
+      order: 9
     autoDiscover:
       title: 'Automatically discover Rokus on the local network'
       description: 'Un-check to only allow manual device entry'
       type: 'boolean'
       default: true
-      order: 9
+      order: 10
 
   #
   # Invoked by Atom one time only, when an activation command is issued
@@ -113,6 +120,7 @@ module.exports        = RokuDevelop =
     @homeBeforeDeploy    = atom.config.get 'roku-develop.homeBeforeDeploy'
     @autoDiscover        = atom.config.get 'roku-develop.autoDiscover'
     @rokuPackagePassword = atom.config.get 'roku-develop.rokuPackagePassword'
+    @rokuPackageSN       = atom.config.get 'roku-develop.rokuPackageSN'
 
     atom.config.observe 'roku-develop.excludedPaths', (newValue) =>
       @excludedPaths = newValue
@@ -135,6 +143,9 @@ module.exports        = RokuDevelop =
 
     atom.config.observe 'roku-develop.homeBeforeDeploy', (newValue) =>
       @homeBeforeDeploy = newValue
+
+    atom.config.observe 'roku-develop.rokuPackageSN', (newValue) =>
+      @rokuPackageSN = newValue
 
     atom.config.observe 'roku-develop.autoDiscover', (newValue) =>
       # If auto-discovery was previously disabled, but is now being enabled,
@@ -264,11 +275,25 @@ module.exports        = RokuDevelop =
                                     }
       return
 
-    # Check that only one discovered device is selected
+    # Check whether the default packaging device is set and included in the device
+    # list, if more than one device is enabled
     if @rokuIPList.length != 1
-      atom.notifications.addWarning 'Only one device should be selected for
-                                     packaging', {dismissable: true}
-      return
+      if not @rokuPackageSN?.length
+        atom.notifications.addWarning 'Either select only a single device,
+                                       or set a default packaging device.', {dismissable: true}
+        return
+
+      # Search through the serial numbers in the device table for one that matches
+      # the default set by the user, and get the corresponding IP address
+      packageIP = ''
+      for entry in @rokuDeviceTable.getValues()
+        if entry.serialNumber == @rokuPackageSN and entry.deploy
+          packageIP = entry.ipAddr
+
+      if packageIP not in @rokuIPList
+        atom.notifications.addWarning 'The default packaging device is not
+                                       in the selected device list.', {dismissable: true}
+        return
 
     # Ensure the project directory is set
     if not @findProjectDirectory()
@@ -282,7 +307,12 @@ module.exports        = RokuDevelop =
           {dismissable: true, detail: error.message}
         return
       # Send the package post request
-      ip = @rokuIPList[0]
+      # If more than one device is selected use the user-set default;
+      # otherwise, if only one is selected, use that device
+      if @rokuIPList.length != 1
+        ip = packageIP
+      else
+        ip = @rokuIPList[0]
       url = "http://#{ip}/plugin_package"
       form = {
         mysubmit: 'Package',

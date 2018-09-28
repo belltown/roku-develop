@@ -275,13 +275,16 @@ module.exports        = RokuDevelop =
                                     }
       return
 
-    # Check that only one discovered device is selected
+    # Check whether the default packaging device is set and included in the device
+    # list, if more than one device is enabled
     if @rokuIPList.length != 1
       if not @rokuPackageSN?.length
         atom.notifications.addWarning 'Either select only a single device,
                                        or set a default packaging device.', {dismissable: true}
         return
 
+      # Search through the serial numbers in the device table for one that matches
+      # the default set by the user, and get the corresponding IP address
       packageIP = ''
       for entry in @rokuDeviceTable.getValues()
         if entry.serialNumber == @rokuPackageSN and entry.deploy
@@ -304,6 +307,8 @@ module.exports        = RokuDevelop =
           {dismissable: true, detail: error.message}
         return
       # Send the package post request
+      # If more than one device is selected use the user-set default;
+      # otherwise, if only one is selected, use that device
       if @rokuIPList.length != 1
         ip = packageIP
       else

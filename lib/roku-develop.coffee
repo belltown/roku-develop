@@ -30,6 +30,7 @@ module.exports        = RokuDevelop =
   projectDirectory:    null
   zipFilePath:         null
   rokuPackagePassword: null
+  rokuPackageSN:       null
 
   # Package config schema (Settings)
   config:
@@ -61,9 +62,9 @@ module.exports        = RokuDevelop =
                     on Roku device'
       default: ''
       order: 5
-    rokuPackageIP:
+    rokuPackageSN:
       title: 'Default packaging device'
-      description: 'IP of device to use for packaging if multiple devices are selected.'
+      description: 'Serial number of device to use for packaging if multiple devices are selected.'
       type: 'string'
       default: ''
       order: 6
@@ -119,7 +120,7 @@ module.exports        = RokuDevelop =
     @homeBeforeDeploy    = atom.config.get 'roku-develop.homeBeforeDeploy'
     @autoDiscover        = atom.config.get 'roku-develop.autoDiscover'
     @rokuPackagePassword = atom.config.get 'roku-develop.rokuPackagePassword'
-    @rokuPackageIP       = atom.config.get 'roku-develop.rokuPackageIP'
+    @rokuPackageSN       = atom.config.get 'roku-develop.rokuPackageSN'
 
     atom.config.observe 'roku-develop.excludedPaths', (newValue) =>
       @excludedPaths = newValue
@@ -143,8 +144,8 @@ module.exports        = RokuDevelop =
     atom.config.observe 'roku-develop.homeBeforeDeploy', (newValue) =>
       @homeBeforeDeploy = newValue
 
-    atom.config.observe 'roku-develop.rokuPackageIP', (newValue) =>
-      @rokuPackageIP = newValue
+    atom.config.observe 'roku-develop.rokuPackageSN', (newValue) =>
+      @rokuPackageSN = newValue
 
     atom.config.observe 'roku-develop.autoDiscover', (newValue) =>
       # If auto-discovery was previously disabled, but is now being enabled,
@@ -276,12 +277,16 @@ module.exports        = RokuDevelop =
 
     # Check that only one discovered device is selected
     if @rokuIPList.length != 1
-      if not @rokuPackageIP?.length
+      if not @rokuPackageSN?.length
         atom.notifications.addWarning 'Either select only a single device,
                                        or set a default packaging device.', {dismissable: true}
         return
 
-      if @rokuPackageIP not in @rokuIPList
+      for entry in @rokuDeviceTable.getValues()
+        if entry.serialNumber == @rokuPackageSN
+          packageIP = entry.ipAddr
+
+      if packageIP not in @rokuIPList
         atom.notifications.addWarning 'The default packaging device is not
                                        in the selected device list.', {dismissable: true}
         return
@@ -299,7 +304,7 @@ module.exports        = RokuDevelop =
         return
       # Send the package post request
       if @rokuIPList.length != 1
-        ip = @rokuPackageIP
+        ip = packageIP
       else
         ip = @rokuIPList[0]
       url = "http://#{ip}/plugin_package"

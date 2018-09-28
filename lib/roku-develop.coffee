@@ -284,7 +284,7 @@ module.exports        = RokuDevelop =
 
       packageIP = ''
       for entry in @rokuDeviceTable.getValues()
-        if entry.serialNumber == @rokuPackageSN
+        if entry.serialNumber == @rokuPackageSN and entry.deploy
           packageIP = entry.ipAddr
 
       if packageIP not in @rokuIPList

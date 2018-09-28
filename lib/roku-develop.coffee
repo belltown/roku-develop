@@ -282,6 +282,7 @@ module.exports        = RokuDevelop =
                                        or set a default packaging device.', {dismissable: true}
         return
 
+      packageIP = ''
       for entry in @rokuDeviceTable.getValues()
         if entry.serialNumber == @rokuPackageSN
           packageIP = entry.ipAddr

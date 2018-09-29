@@ -4,7 +4,7 @@ fs                    = require 'fs'
 path                  = require 'path'
 request               = require 'request'
 Archiver              = require 'archiver'
-Config                = require 'electron-config'
+Config                = require 'electron-store'
 RokuDevelopView       = require './roku-develop-view.coffee'
 RokuDeviceTable       = require './roku-develop-devtable.coffee'
 RokuSSDP              = require './roku-develop-ssdp.coffee'
@@ -12,24 +12,25 @@ util                  = require 'util'
 
 module.exports        = RokuDevelop =
 
-  excludedPaths:       null
-  excludedPathList:    null
-  zipFileDirectory:    null
-  rokuUserId:          null
-  rokuPassword:        null
-  manifestBuild:       null
-  saveOnDeploy:        null
-  homeBeforeDeploy:    null
-  autoDiscover:        null
-  rokuDeviceTable:     null
-  rokuDevelopView:     null
-  subscriptions:       null
-  myConfig:            null
-  panel:               null
-  rokuIPList:          null
-  projectDirectory:    null
-  zipFilePath:         null
-  rokuPackagePassword: null
+  excludedPaths:          null
+  excludedPathList:       null
+  zipFileDirectory:       null
+  rokuUserId:             null
+  rokuPassword:           null
+  manifestBuild:          null
+  saveOnDeploy:           null
+  homeBeforeDeploy:       null
+  autoDiscover:           null
+  rokuDeviceTable:        null
+  rokuDevelopView:        null
+  subscriptions:          null
+  myConfig:               null
+  panel:                  null
+  rokuIPList:             null
+  projectDirectory:       null
+  zipFilePath:            null
+  rokuPackagePassword:    null
+  defaultPackagingDevice: null
 
   # Package config schema (Settings)
   config:
@@ -61,6 +62,13 @@ module.exports        = RokuDevelop =
                     on Roku device'
       default: ''
       order: 5
+    defaultPackagingDevice:
+      title: 'Default Packaging Device'
+      description: 'The SERIAL NUMBER of the device to use for packaging
+                    -- unless one and only one device is checked'
+      type: 'string'
+      default: ''
+      order: 6
     manifestBuild:
       title: 'Increment manifest build_version'
       type: 'integer'
@@ -71,31 +79,34 @@ module.exports        = RokuDevelop =
         {value: 2, description: 'Use date: yyyymmdd'}
         {value: 3, description: 'Use date/time: yymmddhhmm'}
       ]
-      order: 6
+      order: 7
     saveOnDeploy:
       title: 'Save On Deploy (saves current file before deployment)'
       type: 'boolean'
       default: true
-      order: 7
+      order: 8
     homeBeforeDeploy:
       title: 'Send Home Keypress Before Deploy'
       description: 'Use if deploying a Scene Graph channel
                     causes the Roku to crash'
       type: 'boolean'
       default: false
-      order: 8
+      order: 9
     autoDiscover:
       title: 'Automatically discover Rokus on the local network'
       description: 'Un-check to only allow manual device entry'
       type: 'boolean'
       default: true
-      order: 9
+      order: 10
 
   #
   # Invoked by Atom one time only, when an activation command is issued
   # Activation commands are specified in package.json
   #
   activate: (state) ->
+
+    console.log 'Versions:', process.versions
+
     if state and state.view
       viewState = state.view
     else
@@ -103,16 +114,18 @@ module.exports        = RokuDevelop =
 
     # Get Atom config data, and add event-handlers for config updates
 
-    @excludedPaths       = atom.config.get 'roku-develop.excludedPaths'
-    @excludedPathList    = (item.trim() for item in @excludedPaths.split ',')
-    @zipFileDirectory    = atom.config.get 'roku-develop.zipFileDirectory'
-    @rokuUserId          = atom.config.get 'roku-develop.rokuUserId'
-    @rokuPassword        = atom.config.get 'roku-develop.rokuPassword'
-    @manifestBuild       = atom.config.get 'roku-develop.manifestBuild'
-    @saveOnDeploy        = atom.config.get 'roku-develop.saveOnDeploy'
-    @homeBeforeDeploy    = atom.config.get 'roku-develop.homeBeforeDeploy'
-    @autoDiscover        = atom.config.get 'roku-develop.autoDiscover'
-    @rokuPackagePassword = atom.config.get 'roku-develop.rokuPackagePassword'
+    @excludedPaths          = atom.config.get 'roku-develop.excludedPaths'
+    @excludedPathList       = (item.trim() for item in @excludedPaths.split ',')
+    @zipFileDirectory       = atom.config.get 'roku-develop.zipFileDirectory'
+    @rokuUserId             = atom.config.get 'roku-develop.rokuUserId'
+    @rokuPassword           = atom.config.get 'roku-develop.rokuPassword'
+    @manifestBuild          = atom.config.get 'roku-develop.manifestBuild'
+    @saveOnDeploy           = atom.config.get 'roku-develop.saveOnDeploy'
+    @homeBeforeDeploy       = atom.config.get 'roku-develop.homeBeforeDeploy'
+    @autoDiscover           = atom.config.get 'roku-develop.autoDiscover'
+    @rokuPackagePassword    = atom.config.get 'roku-develop.rokuPackagePassword'
+    @defaultPackagingDevice = atom.config.get(
+                                      'roku-develop.defaultPackagingDevice')
 
     atom.config.observe 'roku-develop.excludedPaths', (newValue) =>
       @excludedPaths = newValue
@@ -145,6 +158,9 @@ module.exports        = RokuDevelop =
 
     atom.config.observe 'roku-develop.rokuPackagePassword', (newValue) =>
       @rokuPackagePassword = newValue
+
+    atom.config.observe 'roku-develop.defaultPackagingDevice', (newValue) =>
+      @defaultPackagingDevice = newValue
 
     # Use a config file in Atom's config directory to persist the device table
     @myConfig = new Config({name: 'roku-develop-config'})
@@ -236,6 +252,12 @@ module.exports        = RokuDevelop =
     if not @checkSettings()
       return
 
+    # Check that at least one discovered device is selected
+    if @rokuIPList.length < 1
+      atom.notifications.addWarning 'No devices marked for deployment',
+                                    {dismissable: true}
+      return
+
     # Show a deploy message here. Async operations can cause the other
     # message to be delayed, appearing like a failure.
     atom.notifications.addInfo 'Starting deploy'
@@ -264,11 +286,50 @@ module.exports        = RokuDevelop =
                                     }
       return
 
-    # Check that only one discovered device is selected
-    if @rokuIPList.length != 1
-      atom.notifications.addWarning 'Only one device should be selected for
-                                     packaging', {dismissable: true}
+    # If only one device marked for deployment, then use it
+    if @rokuIPList.length == 1
+      ip = @rokuIPList[0]
+
+    # If other than one device marked for deployment, check default specified
+    else if not @defaultPackagingDevice
+      atom.notifications.addWarning 'One device only must be selected
+                                     unless the Default Package Device
+                                     (serial number)
+                                     is specified in Settings',
+                                     {dismissable: true}
       return
+
+    # Find the device table entry for the default device
+    else
+      entry = @rokuDeviceTable.get(@defaultPackagingDevice)
+
+      # Check that the default device exists
+      if not entry
+        atom.notifications.addWarning "Package Device serial number
+                                        #{@defaultPackagingDevice}
+                                        not found in device table",
+                          {
+                            dismissable: true,
+                            detail: 'Make sure the SERIAL NUMBER of the default
+                                     packaging device is specified correctly
+                                     in Settings'
+                          }
+        return
+
+      # Check that the default device is marked for deployment
+      # (if it's not marked for deployment, there's a chance that
+      # we'd be trying to create a package that has an old app version)
+      if not entry.deploy
+        atom.notifications.addWarning 'Default Package Device must be checked',
+                          {
+                             dismissable: true,
+                             detail: 'Make sure you have deployed the latest
+                                      version to the default device'
+                          }
+        return
+
+      # All is well, use the default packaging device
+      ip = entry.ipAddr
 
     # Ensure the project directory is set
     if not @findProjectDirectory()
@@ -281,8 +342,8 @@ module.exports        = RokuDevelop =
         atom.notifications.addWarning 'Failed to get package name',
           {dismissable: true, detail: error.message}
         return
+
       # Send the package post request
-      ip = @rokuIPList[0]
       url = "http://#{ip}/plugin_package"
       form = {
         mysubmit: 'Package',
@@ -423,11 +484,6 @@ module.exports        = RokuDevelop =
     @rokuIPList = (entry.ipAddr for entry in @rokuDeviceTable.getValues() \
                     when entry.deploy)
 
-    # Check that at least one discovered device is selected
-    if @rokuIPList.length < 1
-      atom.notifications.addWarning 'No devices marked for deployment',
-                                    {dismissable: true}
-      return false
     return true
   #
   # Called from RokuSSDP whenever a device has been discovered
@@ -594,8 +650,8 @@ module.exports        = RokuDevelop =
       archive?.abort()
 
     # Use the archiver package to create a zip of the project directory
-    # Note that the forceLocalTime zip option doesn't appear to work,
-    # so the files in the zip bundle may have UTC timestamps
+    # In the latest version of Archiver, it appears that the local time
+    # option is now working, unlike in previous versions
     archive = Archiver('zip', {forceLocalTime: true})
 
     archive.on 'error', (e) =>

@@ -24,8 +24,8 @@
     "atom": "*"
   },
   "dependencies": {
-    "electron-config": "^1.0.0",
-    "archiver": "^2.1.1",
-    "request": "^2.87.0"
+    "electron-store": "^2.0.0",
+    "archiver": "^3.0.0",
+    "request": "^2.88.0"
   }
 }

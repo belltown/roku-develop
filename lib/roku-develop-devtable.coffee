@@ -33,6 +33,10 @@ module.exports = class RokuDeviceTable
 
     return changed
 
+  # Retrieve the device table entry for a specified serial number
+  get: (serialNumber) ->
+    @deviceTable.get serialNumber
+
   isEmpty: ->
     @deviceTable.size is 0
 

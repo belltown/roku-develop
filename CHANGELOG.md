@@ -1,3 +1,11 @@
+## v0.1.11 - Add the Default Package Device configuration setting
+
+- Add the Default Package Device configuration setting (serial number of default packaging device,
+  used for packaging unless the device list has one and only one device checked)
+- electron-config is now electron-store
+- Latest version of Archiver now uses local time for zip'd files instead of UTC
+- Use latest versions of all dependent packages
+
 ## v0.1.10 - Add Package command and project-specific ignores
 
 - Add .rokudevignore ignore file parsing

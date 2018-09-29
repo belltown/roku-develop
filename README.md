@@ -28,6 +28,10 @@ Enter the Roku developer settings password. See the Roku
 setting the Roku developer password.
 **Ensure that Developer Mode is enabled for each Roku device.**
 
+`Default Packaging Device` - the SERIAL NUMBER of the default device to be used for packaging, used if more than one device is checked.
+If one and only one device is checked in the device list, then the checked device will be used for packaging instead of this default device.
+This option avoids having to un-check all but one device when packaging, then re-check them if deploying to multiple devices.
+
 `Increment Manifest build_version` - specifies whether
 the manifest file build_version is incremented when the project is deployed:
 
@@ -122,7 +126,7 @@ Uncheck the boxes for devices not to be deployed to.**
 <kbd>Alt+;</kbd> (Alt-semicolon) - Package the currently-deployed application.
 - Roku device must have been keyed using `Genkey` or `Rekey`, (see [https://sdkdocs.roku.com/display/sdkdoc/Packaging+Roku+Channels](https://sdkdocs.roku.com/display/sdkdoc/Packaging+Roku+Channels)).
 - Application packager password (24 chars, e.g. cmqsu1vhB6Q1VVTHI0eGLp==), must have been entered in Settings.
-- Only ONE Roku device may be checked.
+- If a Default Packaging Device is specified in the Config Settings, it will be used, unless one and only one device is checked.
 - Package must first be deployed to the Roku before it can be packaged.
 - Package will be written to the same directory as the Zip File Directory specified in Settings.
 
@@ -195,6 +199,10 @@ Some concepts used in this package were taken from the
 [roku-deploy](https://atom.io/packages/roku-deploy) Atom package by
 [Mike McAulay/mmratio](https://github.com/mmratio).
 Thanks for your efforts, Mike.
+
+Thanks to [AhmedGamal-Inmobly](https://github.com/AhmedGamal-Inmobly),
+[Rolando Islas](https://github.com/rolandoislas),
+and [michael](https://github.com/entrez) for their contributions to this package.
 
 Another useful package for Roku development is
 [language-brightscript](https://atom.io/packages/language-brightscript),

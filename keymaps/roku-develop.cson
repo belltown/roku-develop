@@ -2,3 +2,4 @@
   'ctrl-;': 'roku-develop:toggle'
   'ctrl-alt-;': 'roku-develop:deploy'
   'alt-;': 'roku-develop:package'
+  'ctrl-alt-x': 'roku-develop:switch-files'

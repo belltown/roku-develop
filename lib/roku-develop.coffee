@@ -254,16 +254,35 @@ module.exports        = RokuDevelop =
   #
   switch: ->
     editor = atom.workspace.getActivePaneItem()
+    panes = atom.workspace.getPanes()
     if editor
       file = editor.buffer.file
       if file
-        filename = file.path.substring(file.path.lastIndexOf("/") + 1).replace(/\.[^/.]+$/, "")
+        filename = file.path.substring(file.path.lastIndexOf("/") + 1)
+        fileplain = filename.replace(/\.[^/.]+$/, "")
+        console.debug filename + " -> " + fileplain
         folderpath = file.path.substring(0, file.path.lastIndexOf("/"))
         fs.readdir folderpath, {}, (err, files) =>
-          files.forEach (file) =>
-            if file.indexOf "." > -1
-              atom.workspace.open(folderpath + "/" + file)
-
+          files.forEach (xfile) =>
+            console.debug xfile
+            console.debug xfile + " matches " + filename + ": " + (xfile == filename)
+            if xfile != filename
+              if xfile.substring(0, fileplain.length) == fileplain and xfile.indexOf(".") > -1
+                xfiletype = xfile.substring(xfile.lastIndexOf(".") + 1)
+                console.debug "filetype:" + xfiletype
+                if xfiletype == "xml" or xfiletype == "brs"
+                  console.debug "filetype PASS"
+                  panes.forEach (pane) =>
+                    pane.getItems().forEach (tab) =>
+                      console.debug tab.getTitle()
+                      console.debug "tab is file:" + (tab.getTitle() == xfile)
+                      if tab.getTitle() == xfile
+                        console.debug "activating tab " + xfile
+                        pane.activateItem(tab)
+                        pane.activate()
+                        return
+                  atom.workspace.open(folderpath + "/" + xfile)
+                  return
 
   #
   # Invoked when the roku-develop:deploy command is issued

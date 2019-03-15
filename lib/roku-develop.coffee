@@ -267,12 +267,13 @@ module.exports        = RokuDevelop =
               if xfile.substring(0, fileplain.length) == fileplain and xfile.indexOf(".") > -1
                 xfiletype = xfile.substring(xfile.lastIndexOf(".") + 1)
                 if xfiletype == "xml" or xfiletype == "brs"
-                  panes.forEach (pane) =>
-                    pane.getItems().forEach (tab) =>
-                      if tab.getTitle() == xfile
-                        pane.activateItem(tab)
-                        pane.activate()
-                        return
+                  if panes
+                    panes.forEach (pane) =>
+                      pane.getItems().forEach (tab) =>
+                        if tab.getTitle() == xfile
+                          pane.activateItem(tab)
+                          pane.activate()
+                          return
                   atom.workspace.open(folderpath + "/" + xfile)
                   return
 

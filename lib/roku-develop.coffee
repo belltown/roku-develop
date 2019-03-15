@@ -258,24 +258,29 @@ module.exports        = RokuDevelop =
     if editor
       file = editor.buffer.file
       if file
+        switchMade = false
         filename = file.path.substring(file.path.lastIndexOf("/") + 1)
         fileplain = filename.replace(/\.[^/.]+$/, "")
         folderpath = file.path.substring(0, file.path.lastIndexOf("/"))
         fs.readdir folderpath, {}, (err, files) =>
-          files.forEach (xfile) =>
+          for xfile in files
             if xfile != filename
               if xfile.substring(0, fileplain.length) == fileplain and xfile.indexOf(".") > -1
                 xfiletype = xfile.substring(xfile.lastIndexOf(".") + 1)
                 if xfiletype == "xml" or xfiletype == "brs"
                   if panes
-                    panes.forEach (pane) =>
-                      pane.getItems().forEach (tab) =>
+                    for pane in panes
+                      for tab in pane.getItems()
                         if tab.getTitle() == xfile
                           pane.activateItem(tab)
                           pane.activate()
-                          return
-                  atom.workspace.open(folderpath + "/" + xfile)
-                  return
+                          switchMade = true
+                        return if switchMade
+                      return if switchMade
+                  if switchMade == false
+                    atom.workspace.open(folderpath + "/" + xfile)
+                    switchMade = true
+            return if switchMade
 
 
   #

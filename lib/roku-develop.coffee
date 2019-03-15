@@ -255,7 +255,7 @@ module.exports        = RokuDevelop =
   switch: ->
     editor = atom.workspace.getActivePaneItem()
     panes = atom.workspace.getPanes()
-    if editor
+    if editor and editor.buffer
       file = editor.buffer.file
       if file
         switchMade = false

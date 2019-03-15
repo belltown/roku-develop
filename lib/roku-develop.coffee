@@ -199,6 +199,9 @@ module.exports        = RokuDevelop =
     @subscriptions.add atom.commands.add  'atom-workspace',
                                           'roku-develop:package': => @package()
 
+    @subscriptions.add atom.commands.add  'atom-workspace',
+                                          'roku-develop:switch-files': => @switch()
+
     # Initiate device discovery
     # 'bind' ensures callback executes in the context of the main package code
     # Do not initiate SSDP discovery if automatic discovery is turned off
@@ -244,6 +247,23 @@ module.exports        = RokuDevelop =
   #
   toggle: ->
     if @panel.isVisible() then @panel.hide() else @panel.show()
+
+
+  #
+  # Invoked when the roku-develop:switch-files command is issued
+  #
+  switch: ->
+    editor = atom.workspace.getActivePaneItem()
+    if editor
+      file = editor.buffer.file
+      if file
+        filename = file.path.substring(file.path.lastIndexOf("/") + 1).replace(/\.[^/.]+$/, "")
+        folderpath = file.path.substring(0, file.path.lastIndexOf("/"))
+        fs.readdir folderpath, {}, (err, files) =>
+          files.forEach (file) =>
+            if file.indexOf "." > -1
+              atom.workspace.open(folderpath + "/" + file)
+
 
   #
   # Invoked when the roku-develop:deploy command is issued

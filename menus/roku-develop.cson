@@ -14,6 +14,10 @@
         {
         label: 'Package'
         command: 'roku-develop:package'
+        },
+        {
+        label: 'Switch files'
+        command: 'roku-develop:switch-files'
         }
       ]
     }
@@ -35,6 +39,10 @@ menu: [
         {
         label: 'Package'
         command: "roku-develop:package"
+        },
+        {
+        label: 'Switch files'
+        command: 'roku-develop:switch-files'
         }
       ]
     ]

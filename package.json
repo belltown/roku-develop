@@ -15,7 +15,8 @@
     "atom-workspace": [
       "roku-develop:toggle",
       "roku-develop:deploy",
-      "roku-develop:package"
+      "roku-develop:package",
+      "roku-develop:switch-files"
     ]
   },
   "repository": "https://github.com/belltown/roku-develop",

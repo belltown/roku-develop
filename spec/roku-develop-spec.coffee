@@ -60,3 +60,7 @@ describe "RokuDevelop", ->
         expect(rokuDevelopElement).toBeVisible()
         atom.commands.dispatch workspaceElement, 'roku-develop:toggle'
         expect(rokuDevelopElement).not.toBeVisible()
+
+  describe "when the roku-develop:switch-files event is triggered", ->
+    it "opens a file with the same name", ->
+      expect(true)

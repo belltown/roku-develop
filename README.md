@@ -83,6 +83,8 @@ In addition, the following keyboard shortcuts are defined by default:
 
 <kbd>Alt+;</kbd> (Alt-semicolon) - Package the currently-deployed application.
 
+<kbd>Ctrl-Alt+X</kbd> (Ctrl-Alt-x) - Switch between the current component's brs and xml files, if applicable.
+
 If you find that these particular key combinations don't work well with
 your keyboard configuration, you can change them:
 
@@ -91,8 +93,8 @@ under Keybindings.
 
 2. Edit your Atom keymap.cson file
 (look under **File > Keymap...** or **Edit > Keymap...**),
-then add your own keybindings. For example, to use <kbd>Ctrl+7</kbd>, <kbd>Ctrl+8</kbd> and
-<kbd>Ctrl+9</kbd> instead, place the following lines at the end of
+then add your own keybindings. For example, to use <kbd>Ctrl+7</kbd>, <kbd>Ctrl+8</kbd>,
+<kbd>Ctrl+9</kbd> and <kbd>Ctrl+0</kbd> instead, place the following lines at the end of
 your keymap.cson file:
 
 ```
@@ -100,6 +102,7 @@ your keymap.cson file:
   'ctrl-7': 'roku-develop:package'
   'ctrl-8': 'roku-develop:toggle'
   'ctrl-9': 'roku-develop:deploy'
+  'ctrl-0': 'roku-develop:switch-files'
 ```
 
 ### Usage
@@ -129,6 +132,13 @@ Uncheck the boxes for devices not to be deployed to.**
 - If a Default Packaging Device is specified in the Config Settings, it will be used, unless one and only one device is checked.
 - Package must first be deployed to the Roku before it can be packaged.
 - Package will be written to the same directory as the Zip File Directory specified in Settings.
+
+---
+
+<kbd>Ctrl-Alt+X</kbd> (Ctrl-Alt-x) - Switch between the current component's script (\*.brs) and layout (\*.xml) files.
+- If the corresponding file is already open in another tab and/or pane, focus will move to that tab/pane.
+- If the file is not open yet, a new tab containing it will be opened under the current active pane.
+- If no corresponding file exists (i.e. the current directory contains only a .brs or only an .xml file), no action will be taken.
 
 ---
 
@@ -202,7 +212,7 @@ Thanks for your efforts, Mike.
 
 Thanks to [AhmedGamal-Inmobly](https://github.com/AhmedGamal-Inmobly),
 [Rolando Islas](https://github.com/rolandoislas),
-and [michael](https://github.com/entrez) for their contributions to this package.
+and [Michael Meyer](https://github.com/entrez) for their contributions to this package.
 
 Another useful package for Roku development is
 [language-brightscript](https://atom.io/packages/language-brightscript),

@@ -202,7 +202,7 @@ Thanks for your efforts, Mike.
 
 Thanks to [AhmedGamal-Inmobly](https://github.com/AhmedGamal-Inmobly),
 [Rolando Islas](https://github.com/rolandoislas),
-and [michael](https://github.com/entrez) for their contributions to this package.
+and [Michael Meyer](https://github.com/entrez) for their contributions to this package.
 
 Another useful package for Roku development is
 [language-brightscript](https://atom.io/packages/language-brightscript),

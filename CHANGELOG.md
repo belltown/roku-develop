@@ -1,3 +1,8 @@
+## v0.1.12 - Add a shortcut to switch between brs/xml files
+
+- Add a shortcut to switch between brs/xml files (PR #9)
+- Update copyright year
+
 ## v0.1.11 - Add the Default Package Device configuration setting
 
 - Add the Default Package Device configuration setting (serial number of default packaging device,

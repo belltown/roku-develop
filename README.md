@@ -12,6 +12,8 @@
 
 *Create a Package file for the currently-deployed application.*
 
+*Switch between associated .xml and .brs files with keyboard shortcut.*
+
 ### Install the package in Atom
 
 Go to Settings <kbd>Ctrl+,</kbd> then **Install**. Search for `roku-develop`.
@@ -73,17 +75,17 @@ Rules:
 
 ### Keyboard shortcuts
 
-roku-develop uses three commands: ```roku-develop:toggle```, ```roku-develop:deploy```, and ```roku-develop:package```, which may be selected from the Packages > roku-develop menu, or from the context (right-click) menu.
+roku-develop uses 4 commands: ```roku-develop:toggle```, ```roku-develop:deploy```, ```roku-develop:package```, and ```roku-develop:switch-files```, which may be selected from the Packages > roku-develop menu, or from the context (right-click) menu.
 
 In addition, the following keyboard shortcuts are defined by default:
 
 <kbd>Ctrl+;</kbd> (Ctrl-semicolon) - Toggle device list.
 
-<kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
+<kbd>Ctrl+Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
 
 <kbd>Alt+;</kbd> (Alt-semicolon) - Package the currently-deployed application.
 
-<kbd>Ctrl-Alt+X</kbd> (Ctrl-Alt-x) - Switch between the current component's brs and xml files, if applicable.
+<kbd>Ctrl+Alt+X</kbd> (Ctrl-Alt-x) - Switch between the current component's brs and xml files, if applicable.
 
 If you find that these particular key combinations don't work well with
 your keyboard configuration, you can change them:
@@ -122,7 +124,7 @@ Uncheck the boxes for devices not to be deployed to.**
 
 ---
 
-<kbd>Ctrl-Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
+<kbd>Ctrl+Alt+;</kbd> (Ctrl-Alt-semicolon) - Deploy to selected devices.
 
 ---
 
@@ -135,7 +137,7 @@ Uncheck the boxes for devices not to be deployed to.**
 
 ---
 
-<kbd>Ctrl-Alt+X</kbd> (Ctrl-Alt-x) - Switch between the current component's script (\*.brs) and layout (\*.xml) files.
+<kbd>Ctrl+Alt+X</kbd> (Ctrl-Alt-x) - Switch between the current component's script (\*.brs) and layout (\*.xml) files.
 - If the corresponding file is already open in another tab and/or pane, focus will move to that tab/pane.
 - If the file is not open yet, a new tab containing it will be opened under the current active pane.
 - If no corresponding file exists (i.e. the current directory contains only a .brs or only an .xml file), no action will be taken.

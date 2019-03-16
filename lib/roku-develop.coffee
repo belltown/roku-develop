@@ -248,7 +248,6 @@ module.exports        = RokuDevelop =
   toggle: ->
     if @panel.isVisible() then @panel.hide() else @panel.show()
 
-
   #
   # Invoked when the roku-develop:switch-files command is issued
   #
@@ -264,11 +263,15 @@ module.exports        = RokuDevelop =
       if editorPathParsed.ext
         editorPathParsed.base = ''  # path.format() ignores ext if base present
         switchPath = path.format(editorPathParsed)
-        pane = atom.workspace.paneForURI(switchPath)
-        if not pane?.activateItemForURI(switchPath)
-          fileObj = new File(switchPath)
-          fileObj?.exists().then((fileExists) ->
-            atom.workspace.open(switchPath) if fileExists)
+        activePane = atom.workspace.getActivePane()
+        if not activePane?.activateItemForURI(switchPath)
+          pane = atom.workspace.paneForURI(switchPath)
+          pane?.activate()
+          if not pane?.activateItemForURI(switchPath)
+            fileObj = new File(switchPath)
+            fileObj?.exists().then((fileExists) ->
+              atom.workspace.open(switchPath) if fileExists)
+
   #
   # Invoked when the roku-develop:deploy command is issued
   #

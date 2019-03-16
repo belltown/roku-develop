@@ -253,36 +253,6 @@ module.exports        = RokuDevelop =
   # Invoked when the roku-develop:switch-files command is issued
   #
   switch: ->
-    editor = atom.workspace.getActivePaneItem()
-    panes = atom.workspace.getPanes()
-    if editor and editor.buffer
-      file = editor.buffer.file
-      if file
-        switchMade = false
-        filename = file.path.substring(file.path.lastIndexOf("/") + 1)
-        fileplain = filename.replace(/\.[^/.]+$/, "")
-        folderpath = file.path.substring(0, file.path.lastIndexOf("/"))
-        fs.readdir folderpath, {}, (err, files) =>
-          for xfile in files
-            if xfile != filename
-              if xfile.substring(0, fileplain.length) == fileplain and xfile.indexOf(".") > -1
-                xfiletype = xfile.substring(xfile.lastIndexOf(".") + 1)
-                if xfiletype == "xml" or xfiletype == "brs"
-                  if panes
-                    for pane in panes
-                      for tab in pane.getItems()
-                        if tab.getTitle() == xfile
-                          pane.activateItem(tab)
-                          pane.activate()
-                          switchMade = true
-                        return if switchMade
-                      return if switchMade
-                  if switchMade == false
-                    atom.workspace.open(folderpath + "/" + xfile)
-                    switchMade = true
-            return if switchMade
-
-  switch: ->
     editor = atom.workspace.getActiveTextEditor()
     editorPath = editor?.getPath()
     if editorPath

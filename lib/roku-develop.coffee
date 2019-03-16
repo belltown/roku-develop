@@ -282,7 +282,23 @@ module.exports        = RokuDevelop =
                     switchMade = true
             return if switchMade
 
-
+  switch: ->
+    editor = atom.workspace.getActiveTextEditor()
+    editorPath = editor?.getPath()
+    if editorPath
+      editorPathParsed = path.parse(editorPath)
+      editorPathParsed.ext =
+        if editorPathParsed.ext is '.brs' then '.xml'
+        else if editorPathParsed.ext is '.xml' then '.brs'
+        else ''
+      if editorPathParsed.ext
+        editorPathParsed.base = ''  # path.format() ignores ext if base present
+        switchPath = path.format(editorPathParsed)
+        pane = atom.workspace.paneForURI(switchPath)
+        if not pane?.activateItemForURI(switchPath)
+          fileObj = new File(switchPath)
+          fileObj?.exists().then((fileExists) ->
+            atom.workspace.open(switchPath) if fileExists)
   #
   # Invoked when the roku-develop:deploy command is issued
   #
